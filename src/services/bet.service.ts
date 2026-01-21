@@ -1,7 +1,7 @@
 import { apiClient, ApiResponse } from './api.client';
 
 export const betService = {
-  async placeBet(userId: string, streamId: string, prediction: 1 | 2, amountSol: number): Promise<ApiResponse> {
+  async placeBet(userId: string, streamId: string, prediction: 'player1' | 'player2', amountSol: number): Promise<ApiResponse> {
     const response = await apiClient.post('/bets/place', {
       userId,
       streamId,

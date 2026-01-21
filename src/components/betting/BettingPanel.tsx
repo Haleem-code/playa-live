@@ -32,7 +32,7 @@ export function BettingPanel({ stream, className = '' }: BettingPanelProps) {
 
     try {
       setPlacing(true);
-      const prediction = selectedPlayer === 'player1' ? 1 : 2;
+      const prediction = selectedPlayer;
       
       const response = await betService.placeBet(
           user.id, // Assuming user object has id
@@ -81,35 +81,55 @@ export function BettingPanel({ stream, className = '' }: BettingPanelProps) {
       </div>
 
       {/* Odds / Selection - More compact on mobile */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-6">
+      {/* Odds / Selection */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
         <button
           onClick={() => setSelectedPlayer('player1')}
           className={clsx(
-            "p-2 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all text-center relative overflow-hidden group",
+            "relative p-3 rounded-xl transition-all duration-200 group overflow-hidden",
             selectedPlayer === 'player1'
-              ? 'border-blue-500 bg-blue-500/10'
-              : 'border-slate-700 hover:border-blue-500/50 hover:bg-slate-700/30'
+              ? 'bg-blue-600/20 ring-2 ring-blue-500 translate-y-0'
+              : 'bg-slate-800 hover:bg-slate-700/80 hover:-translate-y-0.5'
           )}
         >
-          <div className="text-[10px] sm:text-sm text-slate-400 mb-0.5 sm:mb-1">Player 1</div>
-          <div className="font-bold text-sm sm:text-lg mb-0.5 sm:mb-1 leading-tight truncate">{stream.player1_name}</div>
-          <div className="text-xl sm:text-2xl font-black text-blue-500">{p1Odds}x</div>
-          {selectedPlayer === 'player1' && <div className="absolute top-1 right-1 sm:top-2 sm:right-2 text-blue-500"><Trophy className="w-3 h-3 sm:w-4 sm:h-4"/></div>}
+          <div className="flex flex-col items-center z-10 relative">
+            <span className="text-[10px] uppercase font-bold text-slate-400 mb-1">Player 1</span>
+            <span className="font-bold text-sm sm:text-base text-white mb-1 line-clamp-1 w-full">{stream.player1_name}</span>
+            <span className={clsx("text-xl font-black", selectedPlayer === 'player1' ? "text-blue-400" : "text-blue-500/70")}>{p1Odds}x</span>
+          </div>
+          {/* Background Glow */}
+          {selectedPlayer === 'player1' && (
+             <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
+          )}
+          {selectedPlayer === 'player1' && (
+             <div className="absolute top-2 right-2 text-blue-500">
+                <Trophy className="w-3 h-3" />
+             </div>
+          )}
         </button>
 
         <button
           onClick={() => setSelectedPlayer('player2')}
           className={clsx(
-            "p-2 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all text-center relative overflow-hidden group",
+            "relative p-3 rounded-xl transition-all duration-200 group overflow-hidden",
             selectedPlayer === 'player2'
-              ? 'border-red-500 bg-red-500/10'
-              : 'border-slate-700 hover:border-red-500/50 hover:bg-slate-700/30'
+              ? 'bg-red-600/20 ring-2 ring-red-500 translate-y-0'
+              : 'bg-slate-800 hover:bg-slate-700/80 hover:-translate-y-0.5'
           )}
         >
-          <div className="text-[10px] sm:text-sm text-slate-400 mb-0.5 sm:mb-1">Player 2</div>
-          <div className="font-bold text-sm sm:text-lg mb-0.5 sm:mb-1 leading-tight truncate">{stream.player2_name}</div>
-          <div className="text-xl sm:text-2xl font-black text-red-500">{p2Odds}x</div>
-          {selectedPlayer === 'player2' && <div className="absolute top-1 right-1 sm:top-2 sm:right-2 text-red-500"><Trophy className="w-3 h-3 sm:w-4 sm:h-4"/></div>}
+          <div className="flex flex-col items-center z-10 relative">
+            <span className="text-[10px] uppercase font-bold text-slate-400 mb-1">Player 2</span>
+            <span className="font-bold text-sm sm:text-base text-white mb-1 line-clamp-1 w-full">{stream.player2_name}</span>
+            <span className={clsx("text-xl font-black", selectedPlayer === 'player2' ? "text-red-400" : "text-red-500/70")}>{p2Odds}x</span>
+          </div>
+          {selectedPlayer === 'player2' && (
+             <div className="absolute inset-0 bg-red-500/10 pointer-events-none" />
+          )}
+          {selectedPlayer === 'player2' && (
+             <div className="absolute top-2 right-2 text-red-500">
+                <Trophy className="w-3 h-3" />
+             </div>
+          )}
         </button>
       </div>
 

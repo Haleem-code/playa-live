@@ -237,8 +237,8 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
         >
           <LayoutGrid className="w-4 h-4 text-white" />
         </button>
-        {/* Streamer Controls in grid view too */}
-        {isStreamer && <StreamerControls />}
+        {/* Streamer Controls - Using standard ControlBar */}
+        {/* {isStreamer && <StreamerControls />} */}
       </div>
     );
   }
@@ -289,8 +289,8 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
           </div>
         )}
         
-        {/* Streamer Controls - Always visible for streamers */}
-        {isStreamer && <StreamerControls />}
+        {/* Streamer Controls - Using standard ControlBar instead to reduce clutter */}
+        {/* {isStreamer && <StreamerControls />} */}
         
         {/* Minimize Button - Top right */}
         <button
@@ -448,7 +448,7 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
       </div>
 
       {/* Streamer Controls - visible in dual view too */}
-      {isStreamer && <StreamerControls />}
+      {/* {isStreamer && <StreamerControls />} */}
     </div>
   );
 }
@@ -630,23 +630,24 @@ export default function LiveKitStreamRoom({ stream, isStreamer, onStreamEnd }: L
 
             {/* Stream Controls (Streamer Only) */}
             {isStreamer && (
-                <div className="absolute top-4 right-4 flex gap-2 z-30">
+                <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-1.5 sm:gap-2 z-30">
                 {/* Go Live Button */}
                 {stream.status !== 'live' && (
                     <button
-                    onClick={handleGoLive}
-                    disabled={goingLive}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg disabled:opacity-50"
+                        onClick={handleGoLive}
+                        disabled={goingLive}
+                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg font-semibold flex items-center gap-1.5 sm:gap-2 shadow-lg disabled:opacity-50 transition-all"
                     >
                     {goingLive ? (
                         <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Going Live...
+                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                        <span className="hidden sm:inline">Going Live...</span>
+                        <span className="sm:hidden">Live...</span>
                         </>
                     ) : (
                         <>
-                        <Video className="w-4 h-4" />
-                        Go Live
+                        <Video className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Go Live</span>
                         </>
                     )}
                     </button>
@@ -656,17 +657,18 @@ export default function LiveKitStreamRoom({ stream, isStreamer, onStreamEnd }: L
                 <button
                     onClick={handleEndStream}
                     disabled={endingStream}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg disabled:opacity-50"
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg font-semibold flex items-center gap-1.5 sm:gap-2 shadow-lg disabled:opacity-50 transition-all"
                     >
                     {endingStream ? (
                     <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Ending...
+                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                        <span className="hidden sm:inline">Ending...</span>
+                        <span className="sm:hidden">End...</span>
                     </>
                     ) : (
                     <>
-                        <Power className="w-4 h-4" />
-                        End Stream
+                        <Power className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>End Stream</span>
                     </>
                     )}
                 </button>

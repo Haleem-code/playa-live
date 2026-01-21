@@ -20,6 +20,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [gravatarError, setGravatarError] = useState(false);
   const walletDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,7 +42,8 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         if (profileResponse.success && profileResponse.data?.user) {
           setProfileImage(profileResponse.data.user.profileImage || null);
           setGravatarUrl(profileResponse.data.user.gravatarUrl || null);
-          setImageError(false); // Reset image error when new data loads
+          setImageError(false);
+          setGravatarError(false); // Reset gravatar error
         }
       } catch (error) {
         console.error('Failed to fetch header data:', error);
@@ -151,7 +153,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         {/* Profile Avatar */}
         <button
           onClick={() => setShowImageModal(true)}
-          className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-zinc-700 transition-all group"
+          className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-zinc-700 transition-all group bg-zinc-800 flex items-center justify-center"
         >
           {profileImage && !imageError ? (
             <img 
@@ -160,17 +162,17 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               className="w-full h-full object-cover"
               onError={() => setImageError(true)}
             />
-          ) : gravatarUrl && !imageError ? (
+          ) : gravatarUrl && !gravatarError ? (
             <img 
               src={gravatarUrl} 
               alt="Profile" 
               className="w-full h-full object-cover"
-              onError={() => setImageError(true)}
+              onError={() => setGravatarError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-blue-600 text-white text-xs font-bold">
+            <span className="text-xs font-bold text-zinc-400 group-hover:text-white">
               {user?.email?.[0].toUpperCase() ?? 'U'}
-            </div>
+            </span>
           )}
         </button>
       </div>

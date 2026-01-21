@@ -60,6 +60,56 @@ class StreamService {
     }
   }
 
+  async getEndedStreams(): Promise<Stream[]> {
+    try {
+      const response = await apiClient.get<ApiResponse<{ streams: Stream[]; count: number }>>('/streams/ended');
+      const body = response.data;
+      
+      let rawStreams: any[] = [];
+      if (body.success && body.data?.streams) {
+        rawStreams = body.data.streams;
+      } else if (body.streams) {
+        rawStreams = body.streams;
+      } else if (Array.isArray(body.data)) {
+        rawStreams = body.data;
+      } else if (Array.isArray(body)) {
+        rawStreams = body;
+      }
+      
+      return rawStreams.map(normalizeStream);
+    } catch (error) {
+      console.error('Error fetching ended streams:', error);
+      return [];
+    }
+  }
+
+  async getScheduledStreams(): Promise<Stream[]> {
+    try {
+      
+      
+      const response = await apiClient.get<ApiResponse<{ streams: Stream[]; total: number }>>('/streams', { 
+        params: { status: 'scheduled' }
+      });
+      const body = response.data;
+      
+      let rawStreams: any[] = [];
+      if (body.success && body.data?.streams) {
+        rawStreams = body.data.streams;
+      } else if (body.streams) {
+        rawStreams = body.streams;
+      } else if (Array.isArray(body.data)) {
+        rawStreams = body.data;
+      } else if (Array.isArray(body)) {
+        rawStreams = body;
+      }
+      
+      return rawStreams.map(normalizeStream);
+    } catch (error) {
+      console.error('Error fetching scheduled streams:', error);
+      return [];
+    }
+  }
+
   async getStreamById(streamId: string): Promise<Stream | null> {
     try {
       const response = await apiClient.get<ApiResponse<{ stream: Stream }>>(`/streams/${streamId}`);

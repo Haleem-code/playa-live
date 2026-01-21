@@ -26,7 +26,13 @@ function getCountdown(targetDate: Date): { days: number; hours: number; minutes:
 
 export function StreamCard({ stream }: StreamCardProps) {
   const router = useRouter();
-  const [thumbnailError, setThumbnailError] = useState(false);
+  // Image Fallback Logic
+  const fallbackUrl = `https://picsum.photos/seed/${stream.id}/800/450`;
+  const [useFallback, setUseFallback] = useState(!stream.thumbnail_url);
+  const [fallbackError, setFallbackError] = useState(false);
+
+  const displayUrl = useFallback ? fallbackUrl : (stream.thumbnail_url || fallbackUrl); // safety fallback
+
   const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
 
   const isScheduled = stream.status.toLowerCase() === 'scheduled';
@@ -120,12 +126,15 @@ export function StreamCard({ stream }: StreamCardProps) {
 
       {/* Thumbnail */}
       <div className="relative aspect-video bg-slate-800">
-        {stream.thumbnail_url && !thumbnailError ? (
+        {!fallbackError && displayUrl ? (
           <img 
-            src={stream.thumbnail_url} 
+            src={displayUrl} 
             alt={stream.title}
             className="w-full h-full object-cover"
-            onError={() => setThumbnailError(true)}
+            onError={() => {
+                if (!useFallback) setUseFallback(true);
+                else setFallbackError(true);
+            }}
           />
         ) : (
           <div className="flex items-center justify-center h-full flex-col text-slate-600 gap-2">

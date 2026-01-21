@@ -12,23 +12,29 @@ export default function HomePage() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const fetchedRef = useRef(false);
-
   useEffect(() => {
-    // Prevent double fetch in React Strict Mode
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-    
     loadStreams();
-  }, []);
+  }, [filter]); // Re-fetch when filter changes
 
   async function loadStreams() {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching streams...');
-      const data = await streamService.getAllStreams();
-      console.log('Streams fetched:', data.length);
+      let data: Stream[] = [];
+
+      switch (filter) {
+        case 'live':
+          data = await streamService.getLiveStreams();
+          break;
+        case 'scheduled':
+          data = await streamService.getScheduledStreams();
+          break;
+        case 'all':
+        default:
+          data = await streamService.getAllStreams();
+          break;
+      }
+      
       setStreams(data);
     } catch (err: any) {
       console.error('Failed to load streams:', err);
@@ -39,22 +45,10 @@ export default function HomePage() {
   }
 
   const handleRefresh = () => {
-    fetchedRef.current = false;
     loadStreams();
   };
 
   const filteredStreams = streams.filter(stream => {
-    // Normalize status for comparison
-    const status = (stream.status || '').toLowerCase();
-    const isLive = stream.is_live === true || status === 'live';
-    const isScheduled = status === 'scheduled';
-    const isEnded = status === 'ended' || status === 'completed';
-    
-    // Apply filter
-    if (filter === 'live' && !isLive) return false;
-    if (filter === 'scheduled' && !isScheduled) return false;
-    // 'all' shows everything
-    
     // Apply search
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
