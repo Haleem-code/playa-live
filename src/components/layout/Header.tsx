@@ -136,7 +136,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                         setShowTransferModal(true);
                         setShowWalletDropdown(false);
                     }}
-                    className="w-full px-4 py-2.5 text-sm text-white bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors text-center font-medium"
+                    className="w-full px-4 py-2.5 cursor-pointer text-sm text-white bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors text-center font-medium"
                     >
                     Transfer Funds
                     </button>

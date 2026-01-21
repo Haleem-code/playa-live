@@ -73,13 +73,13 @@ export function WalletTransferModal({ isOpen, onClose, currentBalance }: WalletT
       />
 
       {/* Modal */}
-      <div className="relative bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-w-md w-full">
+      <div className="relative bg-zinc-900 border border-white/10 rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
           <h2 className="text-lg font-bold text-white">Transfer SOL</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-zinc-400 cursor-pointer hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -88,14 +88,14 @@ export function WalletTransferModal({ isOpen, onClose, currentBalance }: WalletT
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Balance Info */}
-          <div className="bg-slate-800/50 rounded-lg p-3 mb-4">
-            <div className="text-xs text-slate-400 mb-1">Current Balance</div>
+          <div className="bg-zinc-800/50 rounded-lg p-3 mb-4">
+            <div className="text-xs text-zinc-400 mb-1">Current Balance</div>
             <div className="text-lg font-bold text-white">{currentBalance.toFixed(6)} SOL</div>
           </div>
 
           {/* Recipient Address */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Recipient Address
             </label>
             <input
@@ -104,16 +104,16 @@ export function WalletTransferModal({ isOpen, onClose, currentBalance }: WalletT
               value={recipientAddress}
               onChange={(e) => setRecipientAddress(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-white/10 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
             />
-            <div className="text-xs text-slate-400 mt-1">
+            <div className="text-xs text-zinc-400 mt-1">
               {recipientAddress.length}/44 characters
             </div>
           </div>
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Amount (SOL)
             </label>
             <div className="flex gap-2">
@@ -126,13 +126,13 @@ export function WalletTransferModal({ isOpen, onClose, currentBalance }: WalletT
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 disabled={isLoading}
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
+                className="flex-1 px-3 py-2 bg-zinc-800/50 border border-white/10 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setAmount(currentBalance.toString())}
                 disabled={isLoading}
-                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 Max
               </button>
@@ -143,7 +143,7 @@ export function WalletTransferModal({ isOpen, onClose, currentBalance }: WalletT
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-6 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full mt-6 cursor-pointer bg-blue-500 hover:bg-blue-600 disabled:bg-zinc-800 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -157,7 +157,7 @@ export function WalletTransferModal({ isOpen, onClose, currentBalance }: WalletT
         </form>
 
         {/* Footer Info */}
-        <div className="px-6 pb-4 text-xs text-slate-400">
+        <div className="px-6 pb-4 text-xs text-zinc-400">
           <p>Minimum: 0.000001 SOL • Maximum: {currentBalance.toFixed(6)} SOL</p>
         </div>
       </div>

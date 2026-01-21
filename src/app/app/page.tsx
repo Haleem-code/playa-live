@@ -92,7 +92,7 @@ export default function HomePage() {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <button 
             onClick={() => setFilter('live')} 
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
+            className={`px-4 py-2 rounded-full cursor-pointer text-sm font-medium whitespace-nowrap transition-colors border ${
                 filter === 'live' ? 'bg-blue-500 text-white border-blue-500' : 'bg-zinc-900 text-zinc-400 border-white/5 hover:bg-zinc-800 hover:text-white'
             }`}
         >
@@ -100,7 +100,7 @@ export default function HomePage() {
         </button>
         <button 
             onClick={() => setFilter('scheduled')} 
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
+            className={`px-4 py-2 rounded-full text-sm cursor-pointer font-medium whitespace-nowrap transition-colors border ${
                 filter === 'scheduled' ? 'bg-blue-500 text-white border-blue-500' : 'bg-zinc-900 text-zinc-400 border-white/5 hover:bg-zinc-800 hover:text-white'
             }`}
         >
@@ -108,7 +108,7 @@ export default function HomePage() {
         </button>
         <button 
             onClick={() => setFilter('all')} 
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
+            className={`px-4 py-2 rounded-full text-sm cursor-pointer font-medium whitespace-nowrap transition-colors border ${
                 filter === 'all' ? 'bg-blue-500 text-white border-blue-500' : 'bg-zinc-900 text-zinc-400 border-white/5 hover:bg-zinc-800 hover:text-white'
             }`}
         >

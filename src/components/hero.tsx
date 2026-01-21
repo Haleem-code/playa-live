@@ -1,12 +1,20 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowRight, Play, Trophy, Users } from "lucide-react"
+import { Play, Users } from "lucide-react"
+import { VideoModal } from "@/components/video-modal"
 
 export function Hero() {
+  const [showVideo, setShowVideo] = useState(false)
+
   return (
     <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden px-4">
+      <VideoModal isOpen={showVideo} onClose={() => setShowVideo(false)} />
+      
       {/* Background Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-[100px]" />
@@ -39,14 +47,12 @@ export function Hero() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
           <Button size="lg" variant="glow" asChild>
-            <Link href="#">
+            <Link href="/auth/register">
               Start Predicting 
             </Link>
           </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="#">
-              Watch Demo <Play className="ml-2 h-4 w-4" />
-            </Link>
+          <Button className="cursor-pointer" size="lg" variant="outline" onClick={() => setShowVideo(true)}>
+            Watch Demo <Play className="ml-2 h-4 w-4" />
           </Button>
         </div>
 
