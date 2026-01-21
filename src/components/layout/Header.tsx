@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Bell, Wallet, Menu, Loader2, ChevronDown, Edit2 } from 'lucide-react';
+import { Bell, Wallet, Menu, Loader2, ChevronDown, Edit2, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { walletService } from '@/services/wallet.service';
 import { authService } from '@/services/auth.service';
@@ -70,62 +70,77 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <>
-      <header className="h-16 bg-slate-950 border-b border-slate-800 fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-4">
+      <header className="h-16 bg-[#0a0a0a] border-b border-white/5 fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 lg:px-6 shadow-sm">
+        {/* Left: Logo & Menu */}
+        <div className="flex items-center gap-4 lg:w-64">
           <button 
-            className="lg:hidden text-slate-400 hover:text-white"
+            className="lg:hidden text-zinc-400 hover:text-white"
             onClick={onMenuClick}
           >
             <Menu className="w-6 h-6" />
           </button>
           
-          <Link href="/" className="flex items-center gap-2">
-           
-            <span className="text-xl font-bold text-blue-500">
-              PLAYA
-            </span>
+          <Link href="/app" className="hidden lg:flex items-center gap-2 group">
+            <div className="flex items-center gap-2">
+            {/* Logo Placeholder if image is missing, or use existing image */}
+            <span className="font-bold text-xl tracking-tight text-transparent bg-clip-text bg-white">Playa</span>
+          </div>
           </Link>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6">
+        {/* Center: Search Bar */}
+        <div className="hidden md:flex flex-1 max-w-md mx-4">
+            <div className="relative w-full">
+                <input 
+                    type="text" 
+                    placeholder="Find friends " 
+                    className="w-full bg-[#121214] border border-white/5 text-white text-sm rounded-l-md py-2 px-4 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 transition-all placeholder:text-zinc-600"
+                />
+                <button className="absolute right-0 top-0 bottom-0 px-3 bg-[#18181b] hover:bg-[#202023] rounded-r-md border-t border-r border-b border-white/5 flex items-center justify-center transition-colors">
+                    <Search className="w-5 h-5 text-zinc-500 hover:text-zinc-300" />
+                </button>
+            </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center justify-end gap-2 sm:gap-4 lg:flex-1">
           {/* Wallet Dropdown */}
           <div className="relative" ref={walletDropdownRef}>
             <button
               onClick={() => setShowWalletDropdown(!showWalletDropdown)}
-              className="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-full bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-300 transition-colors"
             >
               {isLoadingBalance ? (
-                <>
-                  <Wallet className="w-5 h-5 text-slate-400" />
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                </>
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
               ) : (
                 <>
-                  <Wallet className="w-5 h-5 text-slate-400" />
-                  <span>{(balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SOL</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showWalletDropdown ? 'rotate-180' : ''}`} />
+                  <Wallet className="w-4 h-4 text-zinc-400" />
+                  <span className="hidden sm:inline">{(balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SOL</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showWalletDropdown ? 'rotate-180' : ''}`} />
                 </>
               )}
             </button>
 
             {/* Dropdown Menu */}
             {showWalletDropdown && !isLoadingBalance && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-xl py-2 z-50">
-                <div className="px-4 py-3 border-b border-slate-700">
-                  <div className="text-xs text-slate-400 mb-1">Wallet Balance</div>
-                  <div className="text-xl font-bold text-white">
-                    {(balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} SOL
+              <div className="fixed inset-x-4 top-20 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-64 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl py-2 z-50 md:rounded-lg ring-1 ring-black/5">
+                <div className="px-4 py-3 border-b border-white/5">
+                  <div className="text-xs text-zinc-400 mb-1 font-semibold uppercase tracking-wider">Wallet Balance</div>
+                  <div className="text-2xl font-bold text-white font-mono">
+                    {(balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span className="text-sm text-zinc-500">SOL</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowTransferModal(true);
-                    setShowWalletDropdown(false);
-                  }}
-                  className="w-full px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
-                >
-                  Transfer SOL
-                </button>
+                <div className="p-2">
+                    <button
+                    onClick={() => {
+                        setShowTransferModal(true);
+                        setShowWalletDropdown(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-sm text-white bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors text-center font-medium"
+                    >
+                    Transfer Funds
+                    </button>
+                </div>
               </div>
             )}
           </div>
@@ -133,10 +148,10 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         {/* Notifications */}
         <HeaderNotifications />
 
-        {/* Profile Avatar with Edit */}
+        {/* Profile Avatar */}
         <button
           onClick={() => setShowImageModal(true)}
-          className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-slate-600 hover:border-blue-500 transition-colors group"
+          className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-zinc-700 transition-all group"
         >
           {profileImage && !imageError ? (
             <img 
@@ -153,14 +168,10 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white text-xs font-bold">
+            <div className="w-full h-full flex items-center justify-center bg-blue-600 text-white text-xs font-bold">
               {user?.email?.[0].toUpperCase() ?? 'U'}
             </div>
           )}
-          {/* Edit icon */}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Edit2 className="w-3 h-3 text-white" />
-          </div>
         </button>
       </div>
 

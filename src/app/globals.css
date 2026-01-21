@@ -1,12 +1,81 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  /* Landing Page Variables */
+  --radius: 0.5rem;
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #1f2937;
+  --secondary-foreground: #f3f4f6;
+  --muted: #111827;
+  --muted-foreground: #9ca3af;
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+  --card: rgba(255, 255, 255, 0.05);
+  --card-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #3b82f6;
+}
 
 @layer base {
-  * {
-    @apply border-gray-700;
-  }
-  
-  body {
+  /* Main App Body Style */
+  /* body {
     @apply bg-slate-950 text-slate-100 font-sans;
+  } */
+  
+  /* Combined Body Style: Use Landing Page defaults but keep sans font from main app (which is usually Inter/Geist/Poppins) */
+  /* Since Landing Page uses Poppins in its layout wrapper, and Main App uses Inter in its layout wrapper,
+     we can let the layout classes control the font. 
+     But for background, main app wants slate-950, landing page wants #0a0a0a.
+     If we set a default `bg-background` on body, it will be #0a0a0a.
+     The Main App's layout likely adds NO class to body? 
+     Let's check Main App layout again. 
+     It has `className={inter.className}`.
+     So it relies on global body style.
+     I should set the global body style to support both or default to main app?
+     Since Landing Page layout forces `bg-background`, we can leave global body as Main App style?
+     BUT Landing Page uses `min-h-screen` and `bg-background` in its layout wrapper.
+     So it should override global body?
+     Yes, the specific class on the wrapper `div` in `src/app/landing/layout.tsx` will handle it.
+     So I can keep Main App's body style here?
+     
+     Wait, Main App uses `@apply bg-slate-950`.
+     Landing Page uses `bg-background` (#0a0a0a).
+     If I leave `body { @apply bg-slate-950 }`, the Landing Page wrapper `div` will sit on top.
+     But if the wrapper doesn't cover everything...
+     The wrapper has `min-h-screen`. Should be fine.
+  */
+
+  body {
+     @apply bg-slate-950 text-slate-100 font-sans antialiased;
   }
 
   /* Safe area for notched devices */
@@ -17,12 +86,16 @@
 }
 
 @layer components {
-  /* Responsive container */
+  /* Landing Page Glass Utility */
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+  }
+
+  /* Main App Components */
   .container-responsive {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
-  /* Button base */
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer active:scale-95;
   }
@@ -35,12 +108,10 @@
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer active:scale-95 bg-slate-700 hover:bg-slate-600 text-white;
   }
 
-  /* Card */
   .card {
     @apply bg-slate-800 rounded-lg p-4 sm:p-6 shadow-lg;
   }
 
-  /* Input */
   .input {
     @apply w-full px-4 py-2 sm:py-3 bg-slate-700 border border-slate-600;
     @apply rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
@@ -56,4 +127,3 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-

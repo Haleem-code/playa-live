@@ -141,11 +141,11 @@ export default function HeaderNotifications() {
       {/* Bell Icon Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 hover:bg-slate-700 rounded-lg transition-colors"
+        className="relative p-2 hover:bg-zinc-800 rounded-full transition-colors group"
       >
-        <Bell className="w-5 h-5 text-slate-300" />
+        <Bell className="w-5 h-5 text-zinc-400 group-hover:text-white" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+          <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center ring-2 ring-[#0a0a0a]">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -153,14 +153,14 @@ export default function HeaderNotifications() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-12 w-96 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-50 max-h-[600px] flex flex-col">
+        <div className="fixed inset-x-4 top-20 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-96 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl z-50 max-h-[80vh] md:max-h-[600px] flex flex-col ring-1 ring-black/5">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-            <h3 className="font-bold text-white">Notifications</h3>
+          <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between bg-zinc-900/50 rounded-t-xl">
+            <h3 className="font-bold text-white text-sm">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors"
               >
                 <Check className="w-3 h-3" />
                 Mark all read
@@ -169,45 +169,45 @@ export default function HeaderNotifications() {
           </div>
 
           {/* Notifications List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
               </div>
             ) : notifications.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">
-                <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No notifications yet</p>
+              <div className="text-center py-12 text-zinc-500">
+                <Bell className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">No new notifications</p>
               </div>
             ) : (
               notifications.map((notification) => (
                 <button
                   key={notification._id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`w-full px-4 py-3 border-b border-slate-700 hover:bg-slate-700 transition-colors text-left ${
-                    !notification.read ? 'bg-slate-750' : ''
+                  className={`w-full px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors text-left group ${
+                    !notification.read ? 'bg-blue-500/5' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     {/* Icon */}
-                    <div className="text-2xl flex-shrink-0 mt-1">
+                    <div className="text-xl flex-shrink-0 mt-0.5 grayscale group-hover:grayscale-0 transition-all">
                       {getNotificationIcon(notification.type)}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <p className="font-semibold text-white text-sm truncate">
+                      <div className="flex items-start justify-between gap-2 mb-0.5">
+                        <p className={`text-sm truncate ${!notification.read ? 'text-white font-semibold' : 'text-zinc-300 font-medium'}`}>
                           {notification.title}
                         </p>
                         {!notification.read && (
-                          <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></span>
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></span>
                         )}
                       </div>
-                      <p className="text-slate-300 text-sm line-clamp-2 mb-1">
+                      <p className="text-zinc-400 text-xs line-clamp-2 mb-1 group-hover:text-zinc-300 transition-colors">
                         {notification.message}
                       </p>
-                      <p className="text-slate-500 text-xs">
+                      <p className="text-zinc-500 text-[10px]">
                         {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                       </p>
                     </div>
@@ -216,10 +216,10 @@ export default function HeaderNotifications() {
                     {!notification.read && (
                       <button
                         onClick={(e) => handleMarkAsRead(notification._id, e)}
-                        className="p-1 hover:bg-slate-600 rounded transition-colors flex-shrink-0"
+                        className="p-1 hover:bg-zinc-700 rounded transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
                         title="Mark as read"
                       >
-                        <Check className="w-4 h-4 text-slate-400" />
+                        <Check className="w-3 h-3 text-zinc-400" />
                       </button>
                     )}
                   </div>
@@ -230,15 +230,15 @@ export default function HeaderNotifications() {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-slate-700">
+            <div className="px-4 py-2 border-t border-white/5 bg-zinc-900/50 rounded-b-xl">
               <button
                 onClick={() => {
                   setIsOpen(false);
                   router.push('/notifications');
                 }}
-                className="text-sm text-blue-400 hover:text-blue-300 w-full text-center"
+                className="text-xs font-medium text-zinc-400 hover:text-white w-full text-center py-1 transition-colors"
               >
-                View all notifications
+                View all history
               </button>
             </div>
           )}
@@ -250,73 +250,73 @@ export default function HeaderNotifications() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setSelectedNotification(null)}
           />
 
           {/* Modal */}
-          <div className="relative bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-w-md w-full">
+          <div className="relative bg-[#18181b] border border-white/10 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-700">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <div className="flex items-center justify-between p-5 border-b border-white/5">
+              <h2 className="text-lg font-bold text-white flex items-center gap-3">
                 <span className="text-2xl">{getNotificationIcon(selectedNotification.type)}</span>
                 {selectedNotification.title}
               </h2>
               <button
                 onClick={() => setSelectedNotification(null)}
-                className="p-1 hover:bg-slate-700 rounded transition-colors"
+                className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-slate-400" />
+                <X className="w-5 h-5 text-zinc-400" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
-              <p className="text-slate-300">{selectedNotification.message}</p>
+            <div className="p-6 space-y-5">
+              <p className="text-zinc-300 leading-relaxed">{selectedNotification.message}</p>
 
               {/* Stream Details */}
               {selectedNotification.data && (
-                <div className="bg-slate-800 rounded-lg p-4 space-y-2 text-sm">
+                <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 space-y-2 text-sm">
                   {selectedNotification.data.streamTitle && (
-                    <div>
-                      <span className="text-slate-400">Stream:</span>
-                      <span className="text-white ml-2">{selectedNotification.data.streamTitle}</span>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Stream</span>
+                      <span className="text-white font-medium text-right">{selectedNotification.data.streamTitle}</span>
                     </div>
                   )}
                   {selectedNotification.data.player1Name && selectedNotification.data.player2Name && (
-                    <div>
-                      <span className="text-slate-400">Match:</span>
-                      <span className="text-white ml-2">
-                        {selectedNotification.data.player1Name} vs {selectedNotification.data.player2Name}
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Match</span>
+                      <span className="text-white font-medium text-right">
+                        {selectedNotification.data.player1Name} <span className="text-zinc-600">vs</span> {selectedNotification.data.player2Name}
                       </span>
                     </div>
                   )}
                   {selectedNotification.data.creatorUsername && (
-                    <div>
-                      <span className="text-slate-400">Creator:</span>
-                      <span className="text-white ml-2">{selectedNotification.data.creatorUsername}</span>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Creator</span>
+                      <span className="text-white font-medium text-right">{selectedNotification.data.creatorUsername}</span>
                     </div>
                   )}
                 </div>
               )}
 
-              <p className="text-slate-500 text-xs">
-                {formatDistanceToNow(new Date(selectedNotification.createdAt), { addSuffix: true })}
+              <p className="text-zinc-500 text-xs flex items-center gap-1">
+                Received {formatDistanceToNow(new Date(selectedNotification.createdAt), { addSuffix: true })}
               </p>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 p-6 border-t border-slate-700">
+            <div className="flex gap-3 p-5 border-t border-white/5 bg-zinc-900/30 rounded-b-xl">
               <button
                 onClick={() => setSelectedNotification(null)}
-                className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-lg transition-colors text-sm"
               >
                 Close
               </button>
               {selectedNotification.data?.streamId && (
                 <button
                   onClick={handleViewStream}
-                  className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm shadow-lg shadow-blue-900/20"
                 >
                   View Stream
                 </button>

@@ -78,11 +78,11 @@ export default function HomePage() {
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
         <input 
           type="text" 
           placeholder="Search live streams..." 
-          className="input pl-10 bg-slate-900 border-slate-800 focus:border-blue-500"
+          className="input pl-10 bg-[#121214] border-white/5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white placeholder:text-zinc-600 rounded-lg w-full py-3 transition-colors"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -92,24 +92,24 @@ export default function HomePage() {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <button 
             onClick={() => setFilter('live')} 
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                filter === 'live' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
+                filter === 'live' ? 'bg-blue-500 text-white border-blue-500' : 'bg-zinc-900 text-zinc-400 border-white/5 hover:bg-zinc-800 hover:text-white'
             }`}
         >
             Live Now
         </button>
         <button 
             onClick={() => setFilter('scheduled')} 
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                filter === 'scheduled' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
+                filter === 'scheduled' ? 'bg-blue-500 text-white border-blue-500' : 'bg-zinc-900 text-zinc-400 border-white/5 hover:bg-zinc-800 hover:text-white'
             }`}
         >
             Scheduled
         </button>
         <button 
             onClick={() => setFilter('all')} 
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                filter === 'all' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
+                filter === 'all' ? 'bg-blue-500 text-white border-blue-500' : 'bg-zinc-900 text-zinc-400 border-white/5 hover:bg-zinc-800 hover:text-white'
             }`}
         >
             All Streams
@@ -128,7 +128,7 @@ export default function HomePage() {
             ))}
         </div>
       ) : (
-        <div className="text-center py-20 text-slate-500 bg-slate-900/50 rounded-lg border border-slate-800 border-dashed">
+        <div className="text-center py-20 text-zinc-500 bg-zinc-900/50 rounded-lg border border-white/5 border-dashed">
             <p className="text-lg font-medium mb-1">No streams found</p>
             <p className="text-sm">Try adjusting your filters or check back later.</p>
         </div>

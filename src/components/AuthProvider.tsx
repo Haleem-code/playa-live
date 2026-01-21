@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { SplashScreen } from './ui/SplashScreen';
 import { authService } from '@/services/auth.service';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -14,7 +13,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
-  const [isInitializing, setIsInitializing] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Check if user is authenticated on mount - only after hydration
@@ -50,19 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [hasHydrated, user, login, logout]);
 
-  // Handle splash screen timing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitializing(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   // Redirect logic based on auth status and current route
   useEffect(() => {
     // Wait for hydration and auth check to complete
-    if (!hasHydrated || isCheckingAuth || isInitializing) return;
+    if (!hasHydrated || isCheckingAuth) return;
+    
+    // Allow landing page and root path without auth
+    if (pathname === '/' || pathname?.startsWith('/landing')) return;
 
     const isAuthRoute = pathname?.startsWith('/auth');
 
@@ -75,32 +67,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       // User IS authenticated
       if (isAuthRoute) {
-        // Redirect to home if trying to access auth pages while logged in
-        router.push('/');
+        // Redirect to app if trying to access auth pages while logged in
+        router.push('/app');
       }
     }
-  }, [user, token, pathname, router, hasHydrated, isCheckingAuth, isInitializing]);
+  }, [user, token, pathname, router, hasHydrated, isCheckingAuth]);
 
-  // Show splash screen during initial load or while waiting for hydration
-  if (isInitializing || !hasHydrated) {
-    return <SplashScreen finishLoading={() => {}} />;
+  // Don't render anything until hydrated to avoid mismatch
+  if (!hasHydrated) return null;
+
+  // Allow landing page and root path to be visible immediately
+  if (pathname === '/' || pathname?.startsWith('/landing')) {
+    return <>{children}</>;
   }
 
-  // Show splash while checking authentication
+  // For protected/auth routes, don't show anything while checking auth
   if (isCheckingAuth) {
-    return <SplashScreen finishLoading={() => {}} />;
+    return null;
   }
 
-  // User is authenticated: show children
-  if (user && token) {
-    return <>{children}</>;
+  // If we're on a protected route and not authenticated, 
+  // don't render children (prevent flash) while redirect happens in useEffect
+  if (!user && !pathname?.startsWith('/auth')) {
+    return null;
   }
 
-  // User is NOT authenticated: only show auth routes
-  if (pathname?.startsWith('/auth')) {
-    return <>{children}</>;
-  }
-
-  // Default: show splash screen while redirecting
-  return <SplashScreen finishLoading={() => {}} />;
+  return <>{children}</>;
 }

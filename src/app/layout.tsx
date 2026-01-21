@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'sonner';
 
-const inter = Inter({ subsets: ['latin'] })
+const poppins = Poppins({ 
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700']
+})
 
 export const metadata: Metadata = {
   title: 'Playa - Live Gaming Predictions',
@@ -38,7 +41,7 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
       </head>
-      <body className={inter.className}>
+      <body className={poppins.className}>
         <Providers>
           {children}
           <Toaster theme="dark" position="top-center" />
