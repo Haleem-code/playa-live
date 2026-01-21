@@ -28,6 +28,8 @@ function normalizeStream(stream: any): Stream {
       player2_bet_count: stream.stats?.player2_bet_count || stream.stats?.player2BetCount || 0,
     },
     livekitRoomName: stream.livekitRoomName || stream.livekit_room_name || undefined,
+    player1_walletAddress: stream.player1_walletAddress || stream.player1WalletAddress || stream.player1_wallet_address,
+    player2_walletAddress: stream.player2_walletAddress || stream.player2WalletAddress || stream.player2_wallet_address,
   };
 }
 
@@ -93,23 +95,33 @@ class StreamService {
       console.log('=== STREAM SERVICE DEBUG ===');
       console.log('streamData.isLive received:', streamData.isLive);
       
+      
+      // Filter out base64 data URLs - only send actual URLs
+      // Backend can't handle large base64 strings and mobile app sends URLs
+      const isValidUrl = streamData.thumbnailUrl && 
+        (streamData.thumbnailUrl.startsWith('http://') || streamData.thumbnailUrl.startsWith('https://'));
+      
+      // Validate wallet addresses - both are REQUIRED for betting pool initialization
+      if (!streamData.player1WalletAddress || !streamData.player2WalletAddress) {
+        console.error('Both wallet addresses are required for stream creation');
+        throw new Error('Both player wallet addresses are required to create a stream');
+      }
+
       const backendData = {
         streamId: streamData.streamId,
         title: streamData.title,
         description: streamData.title, // Use title as description
         player1Name: streamData.player1Name,
         player2Name: streamData.player2Name,
-        player1WalletAddress: streamData.player1WalletAddress || '',
-        player2WalletAddress: streamData.player2WalletAddress || '',
+        player1WalletAddress: streamData.player1WalletAddress, // Required - no null fallback
+        player2WalletAddress: streamData.player2WalletAddress, // Required - no null fallback
         bettingDeadline: streamData.bettingDeadline,
         startTime: streamData.startTime || new Date().toISOString(),
-        coverImage: streamData.thumbnailUrl || null,
-        status: streamData.isLive ? 'live' : 'scheduled',
-        isLive: streamData.isLive || false,
+        coverImage: isValidUrl ? streamData.thumbnailUrl : null,
       };
 
-      console.log('Status being sent to backend:', backendData.status);
-      console.log('isLive being sent to backend:', backendData.isLive);
+      console.log('=== Stream creation payload ===');
+      console.log('isGoingLive (frontend only):', streamData.isLive);
       console.log('Full backend payload:', JSON.stringify(backendData, null, 2));
 
       const response = await apiClient.post<ApiResponse<{ stream: Stream; transaction: string }>>('/streams/create', backendData);

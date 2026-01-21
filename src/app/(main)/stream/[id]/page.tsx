@@ -1,14 +1,17 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { StreamInfo } from '@/components/stream/StreamInfo';
-import { BettingPanel } from '@/components/betting/BettingPanel';
 import LiveKitStreamRoom from '@/components/stream/LiveKitStreamRoom';
-import { MessageSquare, Users, Loader2 } from 'lucide-react';
+import { Loader2, Home, PlusSquare, Radio, User, LogOut, X, Heart, Video, Settings } from 'lucide-react';
 import { streamService } from '@/services/stream.service';
 import { useAuthStore } from '@/store/authStore';
 import { Stream } from '@/types';
+import Link from 'next/link';
+import clsx from 'clsx';
+
+import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
 
 export default function StreamPage() {
   const params = useParams();
@@ -20,6 +23,7 @@ export default function StreamPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isStreamer, setIsStreamer] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (streamId) {
@@ -30,9 +34,14 @@ export default function StreamPage() {
   useEffect(() => {
     if (stream && user) {
       // Check if current user is creator or player 2 (both can stream)
-      const isCreator = stream.creator_id === user.id || stream.creator_id === user.walletAddress;
+      const isPlayer1 = stream.creator_id === user.id || 
+                        stream.creator_id === user.walletAddress || 
+                        (stream.player1_walletAddress && stream.player1_walletAddress === user.walletAddress);
+      
+      const isPlayer2 = stream.player2_walletAddress === user.walletAddress;
+      
       // Note: Backend will determine streamer role via wallet address matching
-      setIsStreamer(isCreator);
+      setIsStreamer(isPlayer1 || isPlayer2);
     }
   }, [stream, user]);
 
@@ -62,7 +71,7 @@ export default function StreamPage() {
 
   if (loading) {
       return (
-          <div className="h-full flex items-center justify-center">
+          <div className="h-screen w-full bg-[#0a0a0a] flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
           </div>
       );
@@ -70,7 +79,7 @@ export default function StreamPage() {
 
   if (error || !stream) {
       return (
-          <div className="h-full flex items-center justify-center flex-col gap-4">
+          <div className="h-screen w-full bg-[#0a0a0a] flex items-center justify-center flex-col gap-4">
               <div className="text-xl font-bold text-red-400">{error || 'Stream not found'}</div>
               <button onClick={() => router.push('/')} className="btn-secondary">Go Home</button>
           </div>
@@ -78,50 +87,151 @@ export default function StreamPage() {
   }
 
   return (
-    <div className="flex flex-col lg:grid lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 min-h-[calc(100vh-80px)] lg:h-[calc(100vh-100px)] pb-4">
-      {/* Left Column: Video & Info */}
-      <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-4 lg:h-full lg:overflow-y-auto lg:pr-2">
-        {/* LiveKit Video Stream - Made larger */}
-        <div className="min-h-[280px] sm:min-h-[350px] md:min-h-[450px] lg:min-h-[500px] xl:min-h-[550px] lg:flex-1 bg-black rounded-lg sm:rounded-xl overflow-hidden">
-          <LiveKitStreamRoom 
-            stream={stream} 
-            isStreamer={isStreamer}
-            onStreamEnd={handleStreamEnd}
+    <div className="min-h-screen bg-[#0a0a0a] text-slate-200">
+      <Header onMenuClick={() => setMobileMenuOpen(true)} />
+      <Sidebar />
+      
+      {/* Main Content with Sidebar Offset */}
+      <main className="pt-16 lg:pl-64 h-screen overflow-hidden">
+          <div className="w-full h-full">
+            <LiveKitStreamRoom 
+                stream={stream} 
+                isStreamer={isStreamer}
+                onStreamEnd={handleStreamEnd}
+            />
+          </div>
+      </main>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
           />
+          <aside className="absolute top-0 bottom-0 left-0 w-64 bg-[#0a0a0a] border-r border-white/5 p-4 animate-in slide-in-from-left duration-200 z-50">
+             <div className="flex items-center justify-between mb-6">
+                <span className="text-xl font-bold text-transparent bg-clip-text bg-white">
+                  Playa
+                </span>
+                <button onClick={() => setMobileMenuOpen(false)}>
+                  <X className="w-6 h-6 text-zinc-400" />
+                </button>
+             </div>
+             <MobileNavItems onClose={() => setMobileMenuOpen(false)} />
+          </aside>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Mock Data for Mobile Sidebar
+const FOLLOWED_CHANNELS = [
+  { name: 'Ninja', game: 'Fortnite', viewers: '45.2K', isLive: true, avatar: 'bg-blue-500' },
+  { name: 'shroud', game: 'Valorant', viewers: '32.1K', isLive: true, avatar: 'bg-cyan-500' },
+  { name: 'Tfue', game: 'Offline', isLive: false, avatar: 'bg-pink-500' },
+];
+
+const RECOMMENDED_CHANNELS = [
+  { name: 'KaiCenat', game: 'Just Chatting', viewers: '85.4K', isLive: true, avatar: 'bg-orange-500' },
+  { name: 'xQc', game: 'Just Chatting', viewers: '62.8K', isLive: true, avatar: 'bg-blue-400' },
+  { name: 'Summit1g', game: 'Sea of Thieves', viewers: '18.2K', isLive: true, avatar: 'bg-slate-500' },
+];
+
+function MobileNavItems({ onClose }: { onClose: () => void }) {
+  const pathname = usePathname();
+  const { logout } = useAuthStore();
+
+  const links = [
+    { href: '/app', label: 'Browse', icon: Home },
+    { href: '/app/create', label: 'Go Live', icon: PlusSquare },
+    { href: '/app/feed', label: 'Feed', icon: Radio },
+    { href: '/app/profile', label: 'Profile', icon: User },
+  ];
+
+  return (
+    <div className="flex flex-col h-full">
+      <nav className="space-y-2 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent min-h-0">
+        {links.map((link) => {
+          const Icon = link.icon;
+          const isActive = pathname === link.href || (link.href !== '/app' && pathname?.startsWith(link.href));
+          
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onClose}
+              className={clsx(
+                'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-white/10 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              )}
+            >
+              <Icon className="w-5 h-5" />
+              {link.label}
+            </Link>
+          );
+        })}
+
+        <div className="h-[1px] bg-white/5 mx-2 my-4" />
+
+        <div className="px-2">
+            <div className="flex items-center justify-between mb-2 px-2">
+                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">For You</span>
+                <Heart className="w-3 h-3 text-zinc-600" />
+            </div>
+            <div className="space-y-1 blur-[3px] opacity-40 pointer-events-none select-none">
+                {FOLLOWED_CHANNELS.map((channel, i) => (
+                    <div key={i} className="flex items-center justify-between px-2 py-1.5 rounded-md">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className={`w-6 h-6 rounded-full ${channel.avatar} flex items-center justify-center text-[8px] font-bold text-white shrink-0`}>
+                                {channel.name[0]}
+                            </div>
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="text-sm font-medium text-zinc-300 truncate">{channel.name}</span>
+                                <span className="text-[10px] text-zinc-500 truncate">{channel.game}</span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
 
-        {/* Stream Info - Hidden on mobile, shown on tablet+ */}
-        <div className="hidden sm:block">
-          <StreamInfo stream={stream} />
+        <div className="h-[1px] bg-white/5 mx-2 my-4" />
+
+        <div className="px-2 pb-4">
+            <div className="flex items-center justify-between mb-2 px-2">
+                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Recommended</span>
+                <Video className="w-3 h-3 text-zinc-600" />
+            </div>
+            <div className="space-y-1 blur-[3px] opacity-40 pointer-events-none select-none">
+                {RECOMMENDED_CHANNELS.map((channel, i) => (
+                    <div key={i} className="flex items-center justify-between px-2 py-1.5 rounded-md">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className={`w-6 h-6 rounded-full ${channel.avatar} flex items-center justify-center text-[8px] font-bold text-white shrink-0`}>
+                                {channel.name[0]}
+                            </div>
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="text-sm font-medium text-zinc-300 truncate">{channel.name}</span>
+                                <span className="text-[10px] text-zinc-500 truncate">{channel.game}</span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
-      </div>
-
-      {/* Right Column: Predictions & Chat */}
-      <div className="lg:col-span-1 flex flex-col gap-3 sm:gap-4 lg:h-full">
-         {/* Predictions Panel - Priority on mobile */}
-         <div className="order-1 lg:order-none">
-            <BettingPanel stream={stream} />
-         </div>
-         
-         {/* Chat Component */}
-         <div className="order-2 lg:order-none min-h-[200px] sm:min-h-[250px] lg:flex-1 lg:min-h-0 card flex flex-col">
-            <h3 className="font-bold border-b border-slate-700 pb-2 mb-2 flex items-center gap-2 text-sm sm:text-base">
-                <MessageSquare className="w-4 h-4" /> Stream Chat
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-2 text-xs sm:text-sm text-slate-300">
-                <p><span className="text-blue-400 font-bold">User123:</span> Who do you think will win?</p>
-                <p><span className="text-red-400 font-bold">GamerX:</span> Def Player 2!</p>
-                <p><span className="text-green-400 font-bold">Mod:</span> Predict responsibly guys.</p>
-            </div>
-            <div className="mt-2 pt-2 border-t border-slate-700">
-                <input placeholder="Type a message..." className="input py-2 text-xs sm:text-sm" />
-            </div>
-         </div>
-
-         {/* Stream Info - Shown on mobile only */}
-         <div className="order-3 sm:hidden">
-           <StreamInfo stream={stream} />
-         </div>
+      </nav>
+      
+      <div className="border-t border-white/5 pt-4 space-y-2 mb-8">
+        <button 
+          onClick={() => { logout(); onClose(); }}
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 w-full text-left"
+        >
+          <LogOut className="w-5 h-5" />
+          Logout
+        </button>
       </div>
     </div>
   );

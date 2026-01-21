@@ -39,6 +39,8 @@ export interface Stream {
   is_live: boolean;
   stats: StreamStats;
   livekitRoomName?: string;
+  player1_walletAddress?: string;
+  player2_walletAddress?: string;
 }
 
 export interface CreateStreamData {
@@ -95,7 +97,4 @@ export interface LiveKitToken {
   role?: 'streamer' | 'viewer';
 }
 
-export interface LiveKitToken {
-  token: string;
-  url: string;
-}
+

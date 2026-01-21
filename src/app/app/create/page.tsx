@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Camera, Radio, Gamepad2, Mic2, Tag, ChevronDown, Users, Upload, Image as ImageIcon, Loader2, X } from 'lucide-react';
+import { Camera, Radio, Gamepad2, Mic2, Tag, ChevronDown, Users, Upload, Image as ImageIcon, Loader2, X, Clock, Calendar, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { userService } from '@/services/user.service';
 import { streamService } from '@/services/stream.service';
+import { authService } from '@/services';
 import type { User } from '@/types';
 
 export default function CreateStreamPage() {
@@ -15,7 +16,6 @@ export default function CreateStreamPage() {
   const { user } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // ... existing state ...
   // Form State
   const [formData, setFormData] = useState({
     title: '',
@@ -24,6 +24,8 @@ export default function CreateStreamPage() {
   });
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string>(''); // Uploaded URL from server
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   
   // User Search State
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -32,6 +34,33 @@ export default function CreateStreamPage() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedOpponent, setSelectedOpponent] = useState<User | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+
+  // Stream Scheduling State
+  const [streamMode, setStreamMode] = useState<'live' | 'scheduled'>('live');
+  const [startTime, setStartTime] = useState<string>('');
+  const [duration, setDuration] = useState<number>(60); // Duration in minutes
+  const [showCustomDuration, setShowCustomDuration] = useState(false);
+  const [customDuration, setCustomDuration] = useState<string>('');
+
+  const durationOptions = [
+    { label: '30 min', value: 30 },
+    { label: '1 hour', value: 60 },
+    { label: '2 hours', value: 120 },
+    { label: 'Custom', value: -1 },
+  ];
+
+  // Prediction Window State (Betting Deadline)
+  const [predictionWindow, setPredictionWindow] = useState<number>(15); // Default 15 mins (was missing)
+  const [showCustomPrediction, setShowCustomPrediction] = useState(false);
+  const [customPrediction, setCustomPrediction] = useState<string>('');
+
+  const predictionOptions = [
+    { label: '5 min', value: 5 },
+    { label: '10 min', value: 10 },
+    { label: '15 min', value: 15 },
+    { label: '30 min', value: 30 },
+  ];
+
 
   // App State
   const [isCreating, setIsCreating] = useState(false);
@@ -73,19 +102,49 @@ export default function CreateStreamPage() {
     setIsUserDropdownOpen(filtered.length > 0);
   }, [userSearchQuery, allUsers, selectedOpponent]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File too large (max 5MB)');
-        return;
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File too large (max 5MB)');
+      return;
+    }
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+      toast.error('Only JPEG, PNG, GIF, and WebP images are allowed');
+      return;
+    }
+
+    setBannerFile(file);
+    
+    // Create local preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBannerPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload banner immediately to get URL
+    setUploadingBanner(true);
+    try {
+      const response = await authService.uploadProfileImage(file);
+      console.log('Banner upload response:', response);
+      if (response.success && response.data?.imageUrl) {
+        setBannerUrl(response.data.imageUrl);
+        toast.success('Banner uploaded successfully');
+      } else {
+        toast.error('Failed to upload banner');
+        setBannerFile(null);
       }
-      setBannerFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Banner upload error:', error);
+      toast.error('Failed to upload banner');
+      setBannerFile(null);
+      setBannerPreview(null);
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
@@ -115,16 +174,83 @@ export default function CreateStreamPage() {
         toast.error('You must be logged in to create a stream');
         return;
     }
+    if (!user.walletAddress) {
+        toast.error('Your account needs a wallet address to create streams');
+        return;
+    }
+
+    // Validate opponent selection - REQUIRED for betting pool
+    if (!selectedOpponent) {
+      toast.error('Please select an opponent (Player 2)');
+      return;
+    }
+    if (!selectedOpponent.walletAddress) {
+      toast.error('Selected opponent must have a wallet address');
+      return;
+    }
+
+    // Validate scheduled stream
+    if (streamMode === 'scheduled' && !startTime) {
+      toast.error('Please select a start time for scheduled stream');
+      return;
+    }
 
     setIsCreating(true);
 
     try {
-        const thumbnailUrl = bannerPreview || undefined; 
+        // Use the uploaded URL from server, not the base64 preview
+        const thumbnailUrl = bannerUrl || undefined; 
         
-        // Generate a simple ID or UUID if specific library not available
-        const streamId = crypto.randomUUID();
-        const startTime = new Date().toISOString();
-        const bettingDeadline = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins from now
+        // Generate stream ID - must be <= 32 bytes for Solana PDA seeds
+        // Using hex-encoded random bytes (24 chars = 12 bytes)
+        const randomBytes = new Uint8Array(12);
+        crypto.getRandomValues(randomBytes);
+        const streamId = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        // Determine if going live now or scheduled
+        const isGoingLive = streamMode === 'live';
+        
+    // Duration logic
+    const durationMinutes = showCustomDuration && customDuration 
+      ? parseInt(customDuration, 10) 
+      : duration;
+    
+    // startTime MUST be in the future for the backend to accept it
+    // For "Go Live Now": set to 30 seconds from now
+    // For "Scheduled": use user-selected time, but validate it's in the future
+    const now = Date.now();
+    const minStartTime = now + 30 * 1000; // At least 30 seconds in the future
+    
+    let streamStartTime: string;
+    if (isGoingLive) {
+      // Go Live Now: always 30 seconds from now
+      streamStartTime = new Date(minStartTime).toISOString();
+    } else {
+      // Scheduled: use user time if in future, otherwise error was already shown
+      const scheduledTime = startTime ? new Date(startTime).getTime() : now;
+      if (scheduledTime < minStartTime) {
+        toast.error('Start time must be in the future');
+        setIsCreating(false);
+        return;
+      }
+      streamStartTime = new Date(scheduledTime).toISOString();
+    }
+    
+    // Betting Deadline = Start Time + Prediction Window (User Request: add this control)
+    const predictionMinutes = showCustomPrediction && customPrediction
+      ? parseInt(customPrediction, 10)
+      : predictionWindow;
+
+    const startDate = new Date(streamStartTime);
+    const bettingDeadline = new Date(startDate.getTime() + predictionMinutes * 60 * 1000).toISOString();
+    
+    console.log('=== CREATE STREAM DEBUG ===');
+    console.log('streamMode:', streamMode);
+    console.log('isGoingLive:', isGoingLive);
+    console.log('durationMinutes:', durationMinutes);
+    console.log('predictionMinutes:', predictionMinutes);
+        console.log('streamStartTime:', streamStartTime);
+        console.log('bettingDeadline (stream end time):', bettingDeadline);
 
         const newStream = await streamService.createStream({
             streamId,
@@ -136,14 +262,14 @@ export default function CreateStreamPage() {
             player2WalletAddress: selectedOpponent?.walletAddress,
             gameCategory: formData.game,
             thumbnailUrl,
-            durationMinutes: 60,
+            durationMinutes,
             bettingDeadline,
-            startTime,
-            isLive: true, 
+            startTime: streamStartTime,
+            isLive: isGoingLive, 
         });
 
         if (newStream) {
-            toast.success('Stream created successfully! Redirecting...');
+            toast.success(`Stream ${isGoingLive ? 'created and going live' : 'scheduled successfully'}!`);
             router.push(`/app`); 
         } else {
             toast.error('Failed to create stream');
@@ -367,23 +493,221 @@ export default function CreateStreamPage() {
                             />
                         </div>
                     </div>
+                 </div>
+
+                 {/* Stream Mode Toggle: Schedule vs Go Live Now */}
+                 <div className="space-y-3">
+                     <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Stream Mode</label>
+                     <div className="grid grid-cols-2 gap-3">
+                       <button
+                         type="button"
+                         onClick={() => {
+                           setStreamMode('live');
+                           setStartTime(''); // Clear start time when switching to live
+                         }}
+                         className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                           streamMode === 'live'
+                             ? 'border-teal-400 bg-teal-400/10 text-teal-400'
+                             : 'border-zinc-700 hover:border-zinc-600 text-zinc-400'
+                         }`}
+                       >
+                         <Radio className="w-5 h-5" />
+                         <div className="text-left">
+                           <div className="font-medium">Go Live Now</div>
+                           <div className="text-xs opacity-70">Start immediately</div>
+                         </div>
+                       </button>
+                       <button
+                         type="button"
+                         onClick={() => setStreamMode('scheduled')}
+                         className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                           streamMode === 'scheduled'
+                             ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+                             : 'border-zinc-700 hover:border-zinc-600 text-zinc-400'
+                         }`}
+                       >
+                         <Clock className="w-5 h-5" />
+                         <div className="text-left">
+                           <div className="font-medium">Schedule</div>
+                           <div className="text-xs opacity-70">Set a start time</div>
+                         </div>
+                       </button>
+                     </div>
+
+                     {/* Start Time Picker (only show if scheduled) */}
+                     {streamMode === 'scheduled' && (
+                       <div className="pt-2 space-y-2 animate-in fade-in slide-in-from-top-2">
+                         <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Start Time</label>
+                         <div className="relative">
+                           <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                           <input 
+                             type="datetime-local" 
+                             value={startTime}
+                             onChange={(e) => setStartTime(e.target.value)}
+                             className="w-full bg-zinc-900/50 border border-white/10 rounded-xl pl-12 pr-5 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all"
+                           />
+                         </div>
+                         {streamMode === 'scheduled' && (
+                           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                             <p className="text-blue-400 text-sm flex items-center gap-2">
+                               <Clock className="w-4 h-4" />
+                               Stream will be scheduled and can be started at the specified time
+                             </p>
+                           </div>
+                         )}
+                       </div>
+                     )}
+                     
+                     {/* Live Mode Info */}
+                     {streamMode === 'live' && (
+                       <div className="bg-teal-400/10 border border-teal-400/30 rounded-lg p-3 animate-in fade-in slide-in-from-top-2">
+                         <p className="text-teal-400 text-sm flex items-center gap-2">
+                           <Radio className="w-4 h-4 animate-pulse" />
+                           Stream will go LIVE immediately after creation
+                         </p>
+                       </div>
+                     )}
+                 </div>
+
+                 {/* Stream Duration */}
+                 <div className="space-y-3">
+                     <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                       <Timer className="inline w-4 h-4 mr-1" />
+                       Stream Duration
+                     </label>
+                     <div className="grid grid-cols-4 gap-2">
+                       {durationOptions.map((option) => (
+                         <button
+                           key={option.value}
+                           type="button"
+                           onClick={() => {
+                             if (option.value === -1) {
+                               setShowCustomDuration(true);
+                             } else {
+                               setShowCustomDuration(false);
+                               setDuration(option.value);
+                               setCustomDuration('');
+                             }
+                           }}
+                           className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                             (option.value === -1 && showCustomDuration) || (!showCustomDuration && duration === option.value)
+                               ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+                               : 'border-zinc-700 hover:border-zinc-600 text-zinc-400'
+                           }`}
+                         >
+                           {option.label}
+                         </button>
+                       ))}
+                     </div>
+                     
+                     {/* Custom Duration Input */}
+                     {showCustomDuration && (
+                       <div className="relative animate-in fade-in slide-in-from-top-2">
+                         <Timer className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                         <input
+                           type="number"
+                           min="5"
+                           max="480"
+                           placeholder="Enter duration in minutes (5-480)"
+                           value={customDuration}
+                           onChange={(e) => setCustomDuration(e.target.value)}
+                           className="w-full bg-zinc-900/50 border border-white/10 rounded-xl pl-12 pr-20 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all"
+                         />
+                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">minutes</span>
+                       </div>
+                     )}
+                     
+                     <p className="text-xs text-zinc-500">
+                       Selected: {showCustomDuration && customDuration 
+                         ? `${customDuration} minutes` 
+                         : duration === 30 ? '30 minutes' 
+                         : duration === 60 ? '1 hour' 
+                         : '2 hours'
+                       }
+                     </p>
+                 </div>
+
+
+                {/* Prediction Window Selector */}
+
+                <div className="space-y-3">
+                     <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider block">
+                        <Clock className="inline w-4 h-4 mr-1" />
+                        Prediction Window (Betting Time)
+                     </label>
+                     <div className="flex flex-wrap gap-2">
+                        {predictionOptions.map((option) => (
+                           <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                 setPredictionWindow(option.value);
+                                 setShowCustomPrediction(false);
+                              }}
+                              className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                 predictionWindow === option.value && !showCustomPrediction
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20 scale-105'
+                                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                              }`}
+                           >
+                              {option.label}
+                           </button>
+                        ))}
+                        <button
+                           type="button"
+                           onClick={() => setShowCustomPrediction(true)}
+                           className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                              showCustomPrediction
+                                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20 scale-105'
+                                 : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                           }`}
+                        >
+                           Custom
+                        </button>
+                     </div>
+                     
+                     {showCustomPrediction && (
+                        <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                           <div className="relative">
+                              <input
+                                 type="number"
+                                 placeholder="Enter minutes (e.g. 45)"
+                                 value={customPrediction}
+                                 onChange={(e) => setCustomPrediction(e.target.value)}
+                                 className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-medium"
+                              />
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm font-bold">MIN</div>
+                           </div>
+                        </div>
+                     )}
+                     <p className="text-xs text-zinc-500">
+                        Bets will accept for: <span className="text-zinc-300 font-bold">{showCustomPrediction && customPrediction ? customPrediction : predictionWindow} minutes</span> after stream starts
+                     </p>
                 </div>
 
-
                 <div className="pt-4">
-                    <button 
+                     <button 
                         type="submit" 
-                        disabled={isCreating}
+                        disabled={isCreating || uploadingBanner}
                         className="w-full group relative cursor-pointer overflow-hidden rounded-xl bg-white p-[1px] transition-transform active:scale-[0.99] hover:scale-[1.01] disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 animate-gradient-x" />
+                        <div className={`absolute inset-0 ${streamMode === 'live' ? 'bg-gradient-to-r from-red-600 to-orange-600' : 'bg-gradient-to-r from-blue-600 to-purple-600'} animate-gradient-x`} />
                         <div className="relative flex items-center justify-center gap-3 bg-black/10 w-full h-full py-4 rounded-xl group-hover:bg-opacity-0 transition-all">
                             {isCreating ? (
                                 <Loader2 className="w-5 h-5 text-white animate-spin" />
-                            ) : (
+                            ) : streamMode === 'live' ? (
                                 <Radio className="w-5 h-5 text-white animate-pulse" />
+                            ) : (
+                                <Clock className="w-5 h-5 text-white" />
                             )}
-                            <span className="font-bold text-white text-lg tracking-wide">{isCreating ? 'STARTING...' : 'GO LIVE NOW'}</span>
+                            <span className="font-bold text-white text-lg tracking-wide">
+                              {isCreating 
+                                ? 'CREATING...' 
+                                : streamMode === 'live' 
+                                  ? 'GO LIVE NOW' 
+                                  : 'SCHEDULE STREAM'
+                              }
+                            </span>
                         </div>
                     </button>
                 </div>
