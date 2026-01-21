@@ -11,8 +11,13 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: 'Playa - Live Gaming Predictions',
-  description: 'Predict outcomes on live gaming streams with Solana',
+  description: 'Real-time predictions for live 1v1 gaming streams powered by Solana',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon-dark.png',
+    shortcut: '/favicon-dark.png',
+    apple: '/favicon-dark.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -28,7 +33,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#3B82F6',
+  themeColor: '#0a0a0a',
 }
 
 export default function RootLayout({
@@ -38,9 +43,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
-      </head>
       <body className={poppins.className}>
         <Providers>
           {children}
