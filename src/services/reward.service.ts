@@ -8,7 +8,7 @@ export const rewardService = {
   },
 
   async claimRewards(streamId: string, userId: string): Promise<ApiResponse> {
-    const response = await apiClient.post(`/rewards/claim/${streamId}`, { userId });
+    const response = await apiClient.post(`/rewards/claim`, { streamId, userId });
     return response.data;
   }
 };

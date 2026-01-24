@@ -20,8 +20,7 @@ import {
   Camera,
   Trophy,
   Gamepad2,
-  Calendar,
-  User as UserIcon
+  Calendar
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
@@ -64,8 +63,6 @@ export default function ProfilePage() {
   // Profile Image State
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [gravatarError, setGravatarError] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -83,8 +80,6 @@ export default function ProfilePage() {
       const profileResponse = await authService.getUserProfile();
       if (profileResponse.success && profileResponse.data) {
         setProfileData(profileResponse.data);
-        setImageError(false);
-        setGravatarError(false);
       }
 
       // Fetch wallet balance
@@ -209,7 +204,6 @@ export default function ProfilePage() {
                     profileImage: response.data.user.profileImage
                 }
              } : null);
-             setImageError(false); // Reset error on new upload
              toast.success('Profile image updated');
         } else {
             throw new Error(response.message || 'Upload failed');
@@ -222,62 +216,60 @@ export default function ProfilePage() {
     }
   };
 
-
-
   if (!user && !loading) {
-    // ... (keep existing JSX) ...
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center px-4">
-        <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center">
-            <UserIcon className="w-8 h-8 text-zinc-500" />
+        <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center">
+            <Wallet className="w-10 h-10 text-slate-500" />
         </div>
         <div>
-            <h2 className="text-xl font-bold text-white mb-2">Connect Wallet</h2>
-            <p className="text-zinc-400 max-w-sm mx-auto">Please connect your Solana wallet to view your profile.</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Connect Wallet</h2>
+            <p className="text-slate-400 max-w-md mx-auto">Please connect your Solana wallet to view your profile, stats, and betting history.</p>
         </div>
-        <button onClick={() => router.push('/auth/login')} className="bg-white hover:bg-zinc-200 text-black font-bold py-2.5 px-6 rounded-lg transition-colors">
+        <button onClick={() => router.push('/auth/login')} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-900/20">
           Login / Connect
         </button>
       </div>
     );
   }
 
-  const walletAddress = profileData?.user.walletAddress || user?.walletAddress || 'No Wallet Connected';
+  const rawWalletAddress = profileData?.user.walletAddress || user?.walletAddress;
+  const walletAddress = rawWalletAddress && rawWalletAddress.length > 8
+    ? `${rawWalletAddress.slice(0, 4)}...${rawWalletAddress.slice(-4)}`
+    : rawWalletAddress || 'No Wallet Connected';
   const totalBets = profileData?.user.totalBets ?? 0;
   const totalWinnings = profileData?.user.totalWinnings ?? 0;
+  // Calculate Net Profit
+  // Note: Backend seems to track winnings and losses separately.
+  // Net = Winnings - Losses (or Total Wagered if losses tracks amounts)
+  // Assuming loss = stuck bets or processed loss amounts.
   const totalLosses = profileData?.user.totalLosses ?? 0;
   const netProfit = totalWinnings - totalLosses;
 
   // Avatar Display Logic
+  const avatarUrl = profileData?.user.profileImage || profileData?.user.gravatarUrl;
   const initial = (profileData?.user.username?.[0] || user?.email?.[0] || 'U').toUpperCase();
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
-      {/* 1. Header Section - Simplified */}
-      <div className="flex flex-col md:flex-row gap-6 md:items-end">
-         {/* Avatar */}
-         <div className="relative group shrink-0">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-zinc-800 border-4 border-zinc-900 shadow-xl overflow-hidden flex items-center justify-center">
-               {profileData?.user.profileImage && !imageError ? (
-                   <img 
-                     src={profileData.user.profileImage} 
-                     alt="Profile" 
-                     className="w-full h-full object-cover" 
-                     onError={() => setImageError(true)}
-                   />
-               ) : profileData?.user.gravatarUrl && !gravatarError ? (
-                   <img 
-                     src={profileData.user.gravatarUrl} 
-                     alt="Profile" 
-                     className="w-full h-full object-cover" 
-                     onError={() => setGravatarError(true)}
-                   />
+      {/* 1. Profile Header Card */}
+      <div className="relative overflow-hidden rounded-2xl bg-[#0F0F10] border border-[#2a2a2a] p-6 sm:p-10 shadow-xl">
+        {/* Abstract Background Gradient */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none -mt-32 -mr-32" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8">
+          {/* Avatar Section */}
+          <div className="relative group">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#1a1a1a] bg-[#1a1a1a] shadow-2xl overflow-hidden flex items-center justify-center">
+               {avatarUrl ? (
+                   <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                ) : (
-                   <span className="text-4xl font-bold text-zinc-600">{initial}</span>
+                   <span className="text-5xl font-black text-slate-600">{initial}</span>
                )}
             </div>
-            {/* Upload Overlay */}
+            
+            {/* Upload Button Overlay */}
             <button 
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingImage}
@@ -285,89 +277,137 @@ export default function ProfilePage() {
             >
                 {uploadingImage ? <Loader2 className="w-8 h-8 text-white animate-spin" /> : <Camera className="w-8 h-8 text-white" />}
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-         </div>
+            <input 
+                ref={fileInputRef}
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handleImageUpload}
+            />
+          </div>
 
-         {/* Info */}
-         <div className="flex-1 space-y-4">
-            <div>
-               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                 {profileData?.user.username || 'Anonymous User'}
-                  <button 
-                      onClick={() => {
-                          setUsernameInput(profileData?.user.username || '');
-                          setShowUsernameModal(true);
-                      }}
-                      className="text-zinc-500 hover:text-white transition-colors"
-                  >
-                      <Edit2 className="w-5 h-5" />
-                  </button>
-               </h1>
-               <div className="flex items-center gap-4 text-sm text-zinc-500 mt-1">
-                  <span>{profileData?.user.email}</span>
-                  <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
-                  <span>Joined {profileData?.user.createdAt ? new Date(profileData.user.createdAt).toLocaleDateString() : 'Recently'}</span>
+          {/* User Info Section */}
+          <div className="flex-1 text-center md:text-left min-w-0">
+            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+               <div>
+                  <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-3 justify-center md:justify-start">
+                    {profileData?.user.username || 'Anonymous User'}
+                    <button 
+                        onClick={() => {
+                            setUsernameInput(profileData?.user.username || '');
+                            setShowUsernameModal(true);
+                        }}
+                        className="p-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] text-slate-400 hover:text-white transition-colors border border-[#333]"
+                    >
+                        <Edit2 className="w-4 h-4" />
+                    </button>
+                  </h1>
+                  <p className="text-slate-500 font-medium mt-1">{profileData?.user.email}</p>
+                  
+                  {/* Join Date */}
+                  <div className="flex items-center justify-center md:justify-start gap-2 mt-3 text-sm text-slate-600">
+                     <Calendar className="w-4 h-4" />
+                     <span>Joined {profileData?.user.createdAt ? new Date(profileData.user.createdAt).toLocaleDateString() : 'Recently'}</span>
+                  </div>
                </div>
+
+               {/* Right Side Actions ?? Maybe Logout here or Edit Settings */}
             </div>
 
-             {/* Wallet Chip */}
-             <div 
-               onClick={copyWalletAddress}
-               className="inline-flex items-center gap-3 px-4 py-2 rounded-lg bg-zinc-900 border border-white/5 hover:bg-zinc-800 cursor-pointer transition-colors"
-             >
-                <Wallet className="w-4 h-4 text-blue-500" />
-                <span className="font-mono text-zinc-300 text-sm">{walletAddress}</span>
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-zinc-600" />}
+            {/* Wallet Address Chip */}
+            <div className="mt-6 flex justify-center md:justify-start">
+               <div 
+                 onClick={copyWalletAddress}
+                 className="group relative cursor-pointer flex items-center gap-3 px-5 py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] border border-[#333] transition-all"
+               >
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                      <Wallet className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Solana Wallet</span>
+                       <div className="flex items-center gap-2 text-slate-300 font-mono text-sm sm:text-base">
+                           {walletAddress}
+                           {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-slate-600 group-hover:text-white transition-colors" />}
+                       </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+         {/* Balance Card */}
+         <div className="bg-[#0F0F10] border border-[#2a2a2a] p-5 rounded-xl flex items-center gap-4">
+             <div className="w-12 h-12 rounded-full bg-blue-600/10 flex items-center justify-center border border-blue-600/20">
+                 <Wallet className="w-6 h-6 text-blue-500" />
+             </div>
+             <div>
+                 <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Balance</p>
+                 <p className="text-2xl font-black text-white">{balance.toFixed(2)} SOL</p>
+             </div>
+         </div>
+
+         {/* Total Bets Card */}
+         <div className="bg-[#0F0F10] border border-[#2a2a2a] p-5 rounded-xl flex items-center gap-4">
+             <div className="w-12 h-12 rounded-full bg-purple-600/10 flex items-center justify-center border border-purple-600/20">
+                 <Gamepad2 className="w-6 h-6 text-purple-500" />
+             </div>
+             <div>
+                 <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Predictions</p>
+                 <p className="text-2xl font-black text-white">{totalBets}</p>
+             </div>
+         </div>
+
+         {/* Winnings Card */}
+         <div className="bg-[#0F0F10] border border-[#2a2a2a] p-5 rounded-xl flex items-center gap-4">
+             <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                 <Trophy className="w-6 h-6 text-green-500" />
+             </div>
+             <div>
+                 <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Won</p>
+                 <p className="text-2xl font-black text-green-400">+{totalWinnings.toFixed(2)} SOL</p>
+             </div>
+         </div>
+
+         {/* Net Profit/Loss Card */}
+         <div className="bg-[#0F0F10] border border-[#2a2a2a] p-5 rounded-xl flex items-center gap-4">
+             <div className={clsx(
+                 "w-12 h-12 rounded-full flex items-center justify-center border",
+                 netProfit >= 0 ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20"
+             )}>
+                 {netProfit >= 0 ? <TrendingUp className="w-6 h-6 text-green-500" /> : <TrendingDown className="w-6 h-6 text-red-500" />}
+             </div>
+             <div>
+                 <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Net Profit</p>
+                 <p className={clsx("text-2xl font-black", netProfit >= 0 ? "text-green-400" : "text-red-400")}>
+                    {netProfit > 0 ? '+' : ''}{netProfit.toFixed(2)} SOL
+                 </p>
              </div>
          </div>
       </div>
 
-      {/* 2. Stats Grid - Simplified */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-         <div className="bg-zinc-900/50 border border-white/5 p-4 rounded-xl">
-             <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Balance</p>
-             <p className="text-2xl font-bold text-white flex items-center gap-2">
-                {balance.toFixed(2)} <span className="text-sm font-normal text-zinc-500">SOL</span>
-             </p>
-         </div>
-
-         <div className="bg-zinc-900/50 border border-white/5 p-4 rounded-xl">
-             <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Predictions</p>
-             <p className="text-2xl font-bold text-white">{totalBets}</p>
-         </div>
-
-         <div className="bg-zinc-900/50 border border-white/5 p-4 rounded-xl">
-             <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Won</p>
-             <p className="text-2xl font-bold text-green-400">+{totalWinnings.toFixed(2)}</p>
-         </div>
-
-         <div className="bg-zinc-900/50 border border-white/5 p-4 rounded-xl">
-             <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Net Profit</p>
-             <p className={clsx("text-2xl font-bold", netProfit >= 0 ? "text-green-400" : "text-red-400")}>
-                {netProfit > 0 ? '+' : ''}{netProfit.toFixed(2)}
-             </p>
-         </div>
-      </div>
-
-      {/* 3. Prediction History - Simplified */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+      {/* 3. Prediction History */}
+      <div className="bg-[#0F0F10] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-6 border-b border-[#2a2a2a] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <History className="w-5 h-5 text-blue-500" />
-                History
+                Prediction History
             </h3>
-            
-            <div className="flex gap-1 bg-zinc-900 p-1  rounded-lg">
+
+             {/* Tabs */}
+            <div className="flex bg-[#1a1a1a] p-1 rounded-lg">
                 {(['all', 'pending', 'won', 'lost'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => loadBets(tab)}
                         disabled={loadingBets}
                         className={clsx(
-                            "px-3 py-1 rounded-md cursor-pointer text-xs font-bold transition-all capitalize",
+                            "px-4 py-1.5 rounded-md cursor-pointer text-sm font-medium transition-all capitalize",
                             activeTab === tab 
-                                ? "bg-zinc-700 text-white" 
-                                : "text-zinc-500 hover:text-zinc-300"
+                                ? "bg-blue-600 text-white shadow-lg" 
+                                : "text-slate-400 hover:text-white hover:bg-white/5"
                         )}
                     >
                         {tab}
@@ -376,45 +416,69 @@ export default function ProfilePage() {
             </div>
         </div>
 
-        <div>
+        <div className="p-6">
             {loadingBets ? (
-                <div className="flex justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                    <Loader2 className="w-10 h-10 animate-spin mb-4" />
+                    <p>Loading your predictions...</p>
                 </div>
             ) : bets.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-white/5 rounded-xl">
-                    <p className="text-zinc-500 text-sm">No predictions found.</p>
+                <div className="flex flex-col items-center justify-center py-20 bg-[#151516] rounded-xl border border-dashed border-[#2a2a2a]">
+                    <div className="w-16 h-16 bg-[#202022] rounded-full flex items-center justify-center mb-4">
+                        <Gamepad2 className="w-8 h-8 text-slate-600" />
+                    </div>
+                    <h3 className="text-white font-bold text-lg">No predictions yet</h3>
+                    <p className="text-slate-500 mt-2 text-center max-w-sm">Place your first prediction on a live match to see it appear here.</p>
+                    <Link href="/" className="mt-6 px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-slate-200 transition-colors">
+                        Browse Matches
+                    </Link>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {bets.map((bet) => (
-                        <div key={bet._id} className="flex items-center justify-between p-3 bg-zinc-900/30 border border-white/5 rounded-lg hover:border-white/10 transition-colors">
-                           <div className="flex items-center gap-3">
+                        <div key={bet._id} className="group relative bg-[#151516] hover:bg-[#1a1a1b] border border-[#2a2a2a] rounded-xl p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                           <div className="flex items-center gap-4">
+                               {/* Status Icon */}
                                <div className={clsx(
-                                   "w-2 h-2 rounded-full shrink-0",
-                                   bet.status === 'won' ? "bg-green-500" :
-                                   bet.status === 'lost' ? "bg-red-500" :
-                                   "bg-yellow-500"
-                               )} />
+                                   "w-12 h-12 rounded-full flex items-center justify-center border shrink-0",
+                                   bet.status === 'won' ? "bg-green-500/10 border-green-500/20 text-green-500" :
+                                   bet.status === 'lost' ? "bg-red-500/10 border-red-500/20 text-red-500" :
+                                   "bg-yellow-500/10 border-yellow-500/20 text-yellow-500"
+                               )}>
+                                   {bet.status === 'won' ? <Trophy className="w-5 h-5" /> :
+                                    bet.status === 'lost' ? <TrendingDown className="w-5 h-5" /> :
+                                    <History className="w-5 h-5" />}
+                               </div>
+
                                <div>
-                                   <p className="text-sm font-bold text-zinc-200">
-                                       {String(bet.prediction) === '1' || String(bet.prediction) === 'player1' ? 'Player 1' : 'Player 2'}
-                                   </p>
-                                   <p className="text-xs text-zinc-600">
-                                       {formatDistanceToNow(new Date(bet.createdAt), { addSuffix: true })}
-                                   </p>
+                                   <div className="text-white font-bold text-lg mb-0.5">
+                                       Predict: <span className={clsx(
+                                           String(bet.prediction) === '1' || String(bet.prediction) === 'player1' ? "text-blue-400" : "text-red-400"
+                                       )}>{String(bet.prediction) === '1' || String(bet.prediction) === 'player1' ? 'Player 1' : 'Player 2'}</span>
+                                   </div>
+                                   <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                                       <span className="bg-[#222] px-2 py-0.5 rounded text-slate-400">Stream ID: {bet.streamId?.slice(0,8)}...</span>
+                                       <span>{formatDistanceToNow(new Date(bet.createdAt), { addSuffix: true })}</span>
+                                   </div>
                                </div>
                            </div>
-                           <div className="text-right">
-                               <p className="text-sm font-bold text-white">{bet.amount} SOL</p>
-                               <p className={clsx(
-                                   "text-[10px] font-bold uppercase",
-                                   bet.status === 'won' ? "text-green-500" :
-                                   bet.status === 'lost' ? "text-red-500" :
-                                   "text-yellow-500"
+
+                           <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 border-[#2a2a2a] pt-3 sm:pt-0">
+                               <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1 hidden sm:block">Amount</div>
+                               <div className="text-xl font-black text-white flex items-center gap-2">
+                                   {bet.amount} SOL
+                                   {bet.status === 'won' && (
+                                       <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">+{(bet.payout || bet.amount * 2).toFixed(2)}</span>
+                                   )}
+                               </div>
+                               <div className={clsx(
+                                   "text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded mt-1",
+                                   bet.status === 'won' ? "bg-green-500/10 text-green-500" :
+                                   bet.status === 'lost' ? "bg-red-500/10 text-red-500" :
+                                   "bg-yellow-500/10 text-yellow-500"
                                )}>
                                    {bet.status}
-                               </p>
+                               </div>
                            </div>
                         </div>
                     ))}
@@ -427,31 +491,43 @@ export default function ProfilePage() {
       {showUsernameModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowUsernameModal(false)} />
-          <div className="relative bg-[#18181b] border border-white/10 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
-             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Edit Username</h2>
-                <button onClick={() => setShowUsernameModal(false)}>
-                    <X className="w-5 h-5 text-zinc-500 hover:text-white" />
-                </button>
-             </div>
-             
-             <form onSubmit={handleUsernameSubmit} className="space-y-4">
+          <div className="relative bg-[#1a1a1a] border border-[#333] rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-[#333]">
+              <h2 className="text-xl font-bold text-white">Edit Username</h2>
+              <button onClick={() => setShowUsernameModal(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUsernameSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">New Username</label>
                 <input
                   type="text"
-                  placeholder="Username"
+                  placeholder="Enter username"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
-                  className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-black border border-[#333] rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
                   autoFocus
                 />
+                <p className="text-xs text-slate-500 mt-2">Must be 3-30 characters.</p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUsernameModal(false)}
+                  className="flex-1 px-4 py-2.5 bg-[#252525] hover:bg-[#333] text-white font-bold rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={savingUsername}
-                  className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-3 rounded-lg transition-colors flex items-center justify-center"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
-                  {savingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                  {savingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
                 </button>
-             </form>
+              </div>
+            </form>
           </div>
         </div>
       )}

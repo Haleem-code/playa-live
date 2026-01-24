@@ -123,8 +123,8 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="text-center py-20 text-zinc-500 bg-zinc-900/50 rounded-lg border border-white/5 border-dashed">
-            <p className="text-lg font-medium mb-1">No streams found</p>
-            <p className="text-sm">Try adjusting your filters or check back later.</p>
+            <p className="text-lg font-medium mb-1">No Livestreams at the moment </p>
+            <p className="text-sm">check back  or create a new stream.</p>
         </div>
       )}
     </div>

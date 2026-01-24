@@ -151,8 +151,8 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         <HeaderNotifications />
 
         {/* Profile Avatar */}
-        <button
-          onClick={() => setShowImageModal(true)}
+        <Link
+          href="/app/profile"
           className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-zinc-700 transition-all group bg-zinc-800 flex items-center justify-center"
         >
           {profileImage && !imageError ? (
@@ -174,7 +174,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               {user?.email?.[0].toUpperCase() ?? 'U'}
             </span>
           )}
-        </button>
+        </Link>
       </div>
 
       {/* Transfer Modal */}

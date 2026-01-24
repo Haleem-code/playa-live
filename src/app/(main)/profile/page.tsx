@@ -233,13 +233,13 @@ export default function ProfilePage() {
     );
   }
 
-  const walletAddress = profileData?.user.walletAddress || user?.walletAddress || 'No Wallet Connected';
+  const rawWalletAddress = profileData?.user.walletAddress || user?.walletAddress;
+  const walletAddress = rawWalletAddress && rawWalletAddress.length > 8
+    ? `${rawWalletAddress.slice(0, 4)}...${rawWalletAddress.slice(-4)}`
+    : rawWalletAddress || 'No Wallet Connected';
   const totalBets = profileData?.user.totalBets ?? 0;
   const totalWinnings = profileData?.user.totalWinnings ?? 0;
-  // Calculate Net Profit
-  // Note: Backend seems to track winnings and losses separately.
-  // Net = Winnings - Losses (or Total Wagered if losses tracks amounts)
-  // Assuming loss = stuck bets or processed loss amounts.
+  
   const totalLosses = profileData?.user.totalLosses ?? 0;
   const netProfit = totalWinnings - totalLosses;
 

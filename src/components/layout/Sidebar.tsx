@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusSquare, Radio, User, Settings, LogOut, Video, Heart, Users } from 'lucide-react';
+import { Home, PlusSquare, Radio, User, Settings, LogOut, Video, Heart, Users, Trophy } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -34,6 +34,7 @@ export function Sidebar() {
   const userLinks = [
      { href: '/app/create', label: 'Go Live', icon: Video },
      { href: '/app/profile', label: 'Profile', icon: User },
+     { href: '/app/rewards', label: 'Rewards', icon: Trophy },
   ];
 
   return (
