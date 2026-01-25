@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   LiveKitRoom, 
   VideoConference,
@@ -18,7 +18,7 @@ import {
 } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { Track, Participant } from 'livekit-client';
-import { Loader2, Video, VideoOff, Monitor, MonitorOff, Power, Maximize2, Minimize2, User, LayoutGrid, Mic, MicOff, ScreenShare, ScreenShareOff, MessageSquare, Users } from 'lucide-react';
+import { Loader2, Video, VideoOff, Monitor, MonitorOff, Power, Maximize2, Minimize2, User, LayoutGrid, Mic, MicOff, ScreenShare, ScreenShareOff, MessageSquare, Users, Settings, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { livekitService } from '@/services';
 import { StreamTimer } from './StreamTimer';
@@ -130,6 +130,68 @@ function StreamerControls() {
   );
 }
 
+function StreamerSettingsControls() {
+    const { localParticipant } = useLocalParticipant();
+    
+    // Derived state directly from participant to avoid sync issues, 
+    // but force update might be needed if events don't trigger re-render.
+    // useLocalParticipant hook triggers re-renders on changes.
+    
+    const isCameraOn = localParticipant?.isCameraEnabled ?? false;
+    const isMicOn = localParticipant?.isMicrophoneEnabled ?? false;
+    const isScreenSharing = localParticipant?.isScreenShareEnabled ?? false;
+
+    const toggleCamera = useCallback(async () => {
+        try {
+            await localParticipant?.setCameraEnabled(!isCameraOn);
+        } catch (err) {
+            console.error('Failed to toggle camera:', err);
+            toast.error('Failed to toggle camera');
+        }
+    }, [localParticipant, isCameraOn]);
+
+    const toggleMic = useCallback(async () => {
+        try {
+            await localParticipant?.setMicrophoneEnabled(!isMicOn);
+        } catch (err) {
+            console.error('Failed to toggle microphone:', err);
+            toast.error('Failed to toggle microphone');
+        }
+    }, [localParticipant, isMicOn]);
+
+    const toggleScreenShare = useCallback(async () => {
+        try {
+            await localParticipant?.setScreenShareEnabled(!isScreenSharing);
+        } catch (err) {
+            console.error('Failed to toggle screen share:', err);
+            toast.error('Failed to toggle screen share');
+        }
+    }, [localParticipant, isScreenSharing]);
+
+    return (
+        <div className="grid grid-cols-3 gap-2 mb-2">
+            <button 
+                onClick={toggleCamera}
+                className="flex flex-col items-center justify-center p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700 text-white transition-colors gap-1 text-[10px] font-medium border border-white/5"
+            >
+                {isCameraOn ? <Video className="w-4 h-4 text-green-400" /> : <VideoOff className="w-4 h-4 text-red-400" />}
+            </button>
+            <button 
+                onClick={toggleMic}
+                className="flex flex-col items-center justify-center p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700 text-white transition-colors gap-1 text-[10px] font-medium border border-white/5"
+            >
+                {isMicOn ? <Mic className="w-4 h-4 text-green-400" /> : <MicOff className="w-4 h-4 text-red-400" />}
+            </button>
+            <button 
+                onClick={toggleScreenShare}
+                className="flex flex-col items-center justify-center p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700 text-white transition-colors gap-1 text-[10px] font-medium border border-white/5"
+            >
+                {isScreenSharing ? <ScreenShare className="w-4 h-4 text-purple-400" /> : <ScreenShareOff className="w-4 h-4 text-zinc-400" />}
+            </button>
+        </div>
+    );
+}
+
 function ConnectedStreamInfo({ stream }: { stream: Stream }) {
   const participants = useParticipants();
   // Filter out duplicate identities if necessary, or just use raw length. 
@@ -141,9 +203,19 @@ function ConnectedStreamInfo({ stream }: { stream: Stream }) {
 
 
 // Custom Dual Stream Layout Component
-function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: boolean }) {
+function DualStreamLayout({ 
+    stream, 
+    isStreamer,
+    viewMode,
+    setViewMode 
+}: { 
+    stream: Stream; 
+    isStreamer: boolean;
+    viewMode: 'dual' | 'grid';
+    setViewMode: (mode: 'dual' | 'grid') => void;
+}) {
   const [expandedPlayer, setExpandedPlayer] = useState<'player1' | 'player2' | null>(null);
-  const [viewMode, setViewMode] = useState<'dual' | 'grid'>('dual');
+  // viewMode lifted to parent
   const participants = useParticipants();
   const localParticipant = useLocalParticipant();
   
@@ -260,7 +332,7 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
     return (
       <div className="relative w-full h-full">
         {/* Main View - Screen Share or Camera */}
-        <div className="w-full h-full bg-slate-950">
+        <div className="w-full h-full bg-[#0a0a0a]">
           {hasExpandedScreenShare ? (
             // Show screen share as main view
             <ParticipantTile trackRef={expandedScreenTracks[0]} className="w-full h-full" />
@@ -270,12 +342,12 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <div className="text-center">
-                <div className={clsx("w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center", isPlayer1Expanded ? "bg-blue-500/20" : "bg-red-500/20")}>
-                  <User className={clsx("w-12 h-12", isPlayer1Expanded ? "text-blue-500" : "text-red-500")} />
+                <div className={clsx("w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center border border-white/10", isPlayer1Expanded ? "bg-zinc-800" : "bg-zinc-800")}>
+                  <User className={clsx("w-12 h-12", isPlayer1Expanded ? "text-zinc-500" : "text-zinc-500")} />
                 </div>
-                <p className={clsx("font-bold text-xl", isPlayer1Expanded ? "text-blue-400" : "text-red-400")}>{playerName}</p>
-                <p className="text-slate-500 text-sm mt-2">
-                  {isStreamer ? "Use controls below to start streaming" : "Waiting for streamer..."}
+                <p className={clsx("font-bold text-xl", "text-zinc-200")}>{playerName}</p>
+                <p className="text-zinc-500 text-sm mt-2">
+                  {isStreamer ? "Use controls in settings to start streaming" : "Waiting for streamer..."}
                 </p>
               </div>
             </div>
@@ -334,31 +406,24 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
   const player2HasCamera = player2CameraTracks.length > 0 && player2CameraTracks.some(t => t.publication);
 
   return (
-    <div className="w-full h-full flex flex-col sm:flex-row relative bg-black">
-      {/* View Mode Toggle */}
-      <button
-        onClick={() => setViewMode('grid')}
-        className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 backdrop-blur p-2 rounded-lg z-30 transition-colors border border-white/10"
-        title="Switch to Grid View"
-      >
-        <LayoutGrid className="w-4 h-4 text-white" />
-      </button>
+    <div className="w-full h-full flex flex-col sm:flex-row relative bg-[#0a0a0a]">
+      {/* View Mode Toggle - Moved to Settings Menu */}
 
       {/* Player 1 Stream */}
       <div className="relative flex-1 bg-[#0a0a0a] overflow-hidden group min-h-[120px] sm:min-h-0 border-r border-white/5">
         {/* Main content - screen share or camera */}
         {player1HasScreen ? (
-          <ParticipantTile trackRef={player1ScreenTracks[0]} className="w-full h-full object-contain" />
+          <ParticipantTile trackRef={player1ScreenTracks[0]} className="w-full h-full object-contain bg-black" />
         ) : player1HasCamera ? (
           <ParticipantTile trackRef={player1CameraTracks[0]} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[#050505]">
+          <div className="w-full h-full flex items-center justify-center bg-[#0a0a0a]">
             <div className="text-center p-2 sm:p-4">
-              <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.1)]">
-                <User className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
+              <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-zinc-800 flex items-center justify-center border border-white/10 shadow-2xl">
+                <User className="w-8 h-8 sm:w-12 sm:h-12 text-zinc-500" />
               </div>
-              <p className="text-blue-400 font-bold text-sm sm:text-lg">{stream.player1_name}</p>
-              <p className="text-slate-600 text-xs mt-1 font-medium bg-black/40 px-3 py-1 rounded-full inline-block">
+              <p className="text-zinc-200 font-bold text-sm sm:text-lg">{stream.player1_name}</p>
+              <p className="text-zinc-500 text-xs mt-1 font-medium bg-zinc-900 px-3 py-1 rounded-full inline-block border border-white/5">
                 {isStreamer ? "Enable camera" : "Waiting for video..."}
               </p>
             </div>
@@ -367,7 +432,7 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
         
         {/* Circular camera PiP when screen sharing */}
         {player1HasScreen && player1HasCamera && (
-          <div className="absolute top-4 left-4 w-12 h-12 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl z-20 bg-black">
+          <div className="absolute top-4 left-4 w-12 h-12 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl z-20 bg-zinc-900">
             <ParticipantTile trackRef={player1CameraTracks[0]} className="w-full h-full object-cover scale-150" />
           </div>
         )}
@@ -390,7 +455,7 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
       
       {/* VS Divider - Sleek Line with Badge & Timer */}
       <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-20 gap-3">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black border border-white/10 flex items-center justify-center shadow-2xl">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl">
            <span className="text-[10px] sm:text-xs font-black text-white/50 tracking-tighter">VS</span>
         </div>
         
@@ -407,17 +472,17 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
       <div className="relative flex-1 bg-[#0a0a0a] overflow-hidden group min-h-[120px] sm:min-h-0 border-l border-white/5">
         {/* Main content - screen share or camera */}
         {player2HasScreen ? (
-          <ParticipantTile trackRef={player2ScreenTracks[0]} className="w-full h-full object-contain" />
+          <ParticipantTile trackRef={player2ScreenTracks[0]} className="w-full h-full object-contain bg-black" />
         ) : player2HasCamera ? (
           <ParticipantTile trackRef={player2CameraTracks[0]} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[#050505]">
+          <div className="w-full h-full flex items-center justify-center bg-[#0a0a0a]">
             <div className="text-center p-2 sm:p-4">
-              <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
-                <User className="w-8 h-8 sm:w-12 sm:h-12 text-red-500" />
+              <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-zinc-800 flex items-center justify-center border border-white/10 shadow-2xl">
+                <User className="w-8 h-8 sm:w-12 sm:h-12 text-zinc-500" />
               </div>
-              <p className="text-red-400 font-bold text-sm sm:text-lg">{stream.player2_name}</p>
-              <p className="text-slate-600 text-xs mt-1 font-medium bg-black/40 px-3 py-1 rounded-full inline-block">
+              <p className="text-zinc-200 font-bold text-sm sm:text-lg">{stream.player2_name}</p>
+              <p className="text-zinc-500 text-xs mt-1 font-medium bg-zinc-900 px-3 py-1 rounded-full inline-block border border-white/5">
                 {isStreamer ? "Enable camera" : "Waiting for video..."}
               </p>
             </div>
@@ -426,7 +491,7 @@ function DualStreamLayout({ stream, isStreamer }: { stream: Stream; isStreamer: 
         
         {/* Circular camera PiP when screen sharing */}
         {player2HasScreen && player2HasCamera && (
-          <div className="absolute top-4 left-4 w-12 h-12 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl z-20 bg-black">
+          <div className="absolute top-4 left-4 w-12 h-12 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl z-20 bg-zinc-900">
             <ParticipantTile trackRef={player2CameraTracks[0]} className="w-full h-full object-cover scale-150" />
           </div>
         )}
@@ -457,9 +522,9 @@ function SidebarTabs({ stream }: { stream: Stream }) {
     const [activeTab, setActiveTab] = useState<'chat' | 'predictions'>('chat');
 
     return (
-        <div className="flex flex-col h-full bg-[#0a0a0a] border-l border-[#2a2a2a] text-slate-200">
+        <div className="flex flex-col h-full border-l border-white/5 text-slate-200">
             {/* Tab Headers */}
-            <div className="flex items-center border-b border-[#2a2a2a] bg-[#0f0f0f]">
+            <div className="flex items-center border-b border-white/5">
                 <button 
                     onClick={() => setActiveTab('chat')}
                     className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors relative ${
@@ -490,12 +555,12 @@ function SidebarTabs({ stream }: { stream: Stream }) {
             <div className="flex-1 overflow-hidden relative">
                 <div className={`absolute inset-0 flex flex-col ${activeTab === 'chat' ? 'z-10' : 'z-0 hidden'}`}>
                     {/* LiveKit Chat Component */}
-                    <div className="flex-1 h-full w-full [&_.lk-chat]:h-full [&_.lk-chat]:bg-transparent [&_.lk-chat-header]:hidden [&_.lk-chat-entry]:bg-[#1a1a1a] [&_.lk-chat-entry]:border-[#2a2a2a] [&_.lk-chat-form-input]:text-white [&_.lk-chat-form]:bg-[#0f0f0f] [&_.lk-chat-form]:border-t [&_.lk-chat-form]:border-[#2a2a2a]">
+                    <div className="flex-1 h-full w-full [&_.lk-chat]:h-full [&_.lk-chat]:bg-transparent [&_.lk-chat-header]:hidden [&_.lk-chat-entry]:bg-transparent [&_.lk-chat-entry]:border-b [&_.lk-chat-entry]:border-white/5 [&_.lk-chat-form-input]:text-white [&_.lk-chat-form]:bg-transparent [&_.lk-chat-form]:border-t [&_.lk-chat-form]:border-white/10">
                         <Chat />
                     </div>
                 </div>
 
-                <div className={`absolute inset-0 flex flex-col overflow-y-auto ${activeTab === 'predictions' ? 'z-10 bg-[#0a0a0a]' : 'z-0 hidden'}`}>
+                <div className={`absolute inset-0 flex flex-col overflow-y-auto ${activeTab === 'predictions' ? 'z-10' : 'z-0 hidden'}`}>
                     <BettingPanel stream={stream} />
                 </div>
             </div>
@@ -510,6 +575,7 @@ export default function LiveKitStreamRoom({ stream, isStreamer, onStreamEnd }: L
   const [error, setError] = useState<string>('');
   const [goingLive, setGoingLive] = useState(false);
   const [endingStream, setEndingStream] = useState(false);
+  const [viewMode, setViewMode] = useState<'dual' | 'grid'>('dual');
 
   useEffect(() => {
     joinStream();
@@ -613,91 +679,134 @@ export default function LiveKitStreamRoom({ stream, isStreamer, onStreamEnd }: L
       token={token}
       serverUrl={serverUrl}
       connect={true}
-      video={isStreamer}
-      audio={isStreamer}
-      screen={false}
-      className="h-full flex flex-col lg:flex-row bg-[#0a0a0a] overflow-hidden"
+      video={isStreamer} // Allow video publishing for streamers only
+      audio={isStreamer} // Allow audio publishing for streamers only
+      screen={isStreamer} // Allow screen sharing for streamers only
+      data-lk-theme="default"
+      className="h-full flex flex-col lg:flex-row overflow-hidden"
     >
       {/* Main Content Area (Video + Info) */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar h-full lg:h-auto">
         {/* Video Player Container */}
-        <div className="w-full bg-[#030304] aspect-video relative shadow-2xl shrink-0">
-            {/* Dual-stream layout */}
-            <DualStreamLayout stream={stream} isStreamer={isStreamer} />
+        <div className="w-full bg-[#000000] aspect-video relative shadow-2xl shrink-0 group">
+            {/* Dual-stream layout - Pass viewMode props */}
+            <DualStreamLayout 
+                stream={stream} 
+                isStreamer={isStreamer} 
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+            />
 
             {/* Audio Renderer - Invisible */}
             <RoomAudioRenderer />
 
-            {/* Stream Controls (Streamer Only) */}
-            {isStreamer && (
-                <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-1.5 sm:gap-2 z-30">
-                {/* Go Live Button */}
-                {stream.status !== 'live' && (
-                    <button
-                        onClick={handleGoLive}
-                        disabled={goingLive}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg font-semibold flex items-center gap-1.5 sm:gap-2 shadow-lg disabled:opacity-50 transition-all"
-                    >
-                    {goingLive ? (
-                        <>
-                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-                        <span className="hidden sm:inline">Going Live...</span>
-                        <span className="sm:hidden">Live...</span>
-                        </>
-                    ) : (
-                        <>
-                        <Video className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Go Live</span>
-                        </>
-                    )}
+            {/* Unified Settings Dropdown (Top Right) - Visible to Everyone */}
+            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50">
+                <div className="relative group/menu">
+                    <button className="bg-zinc-900/80 hover:bg-zinc-800 backdrop-blur p-2 rounded-lg border border-white/10 transition-colors shadow-lg">
+                        <Settings className="w-5 h-5 text-zinc-200" />
                     </button>
-                )}
+                    
+                    {/* Dropdown Content */}
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl p-2 hidden group-hover/menu:block hover:block animate-in fade-in slide-in-from-top-2 z-50">
+                        {/* Streamer Media Controls */}
+                        {isStreamer && (
+                            <>
+                                <div className="px-2 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                                    Media Controls
+                                </div>
+                                    <StreamerSettingsControls />
+                                <div className="h-[1px] bg-white/5 my-2" />
+                            </>
+                        )}
+                        
+                        {/* Layout Options */}
+                        <div className="px-2 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                            Layout
+                        </div>
+                        <button
+                            onClick={() => setViewMode('dual')}
+                            className={clsx(
+                                "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors mb-1",
+                                viewMode === 'dual' ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white hover:bg-white/5"
+                            )}
+                        >
+                            <Minimize2 className="w-4 h-4 rotate-90" />
+                            Side-by-Side
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={clsx(
+                                "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors",
+                                viewMode === 'grid' ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white hover:bg-white/5"
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                            Grid View
+                        </button>
 
-                {/* End Stream Button */}
-                <button
-                    onClick={handleEndStream}
-                    disabled={endingStream}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg font-semibold flex items-center gap-1.5 sm:gap-2 shadow-lg disabled:opacity-50 transition-all"
-                    >
-                    {endingStream ? (
-                    <>
-                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-                        <span className="hidden sm:inline">Ending...</span>
-                        <span className="sm:hidden">End...</span>
-                    </>
-                    ) : (
-                    <>
-                        <Power className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>End Stream</span>
-                    </>
-                    )}
-                </button>
+                        <div className="h-[1px] bg-white/5 my-2" />
+
+                        {/* Share Option */}
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(window.location.href);
+                                toast.success('Stream link copied');
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/10 rounded-lg text-left transition-colors"
+                        >
+                            <Share2 className="w-4 h-4" />
+                            Share Link
+                        </button>
+
+                        {/* Streamer Controls */}
+                        {isStreamer && (
+                            <>
+                                <div className="h-[1px] bg-white/5 my-2" />
+                                <div className="px-2 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                                    Stream Actions
+                                </div>
+                                {stream.status !== 'live' && (
+                                    <button
+                                        onClick={handleGoLive}
+                                        disabled={goingLive}
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-green-400 hover:bg-green-500/10 rounded-lg disabled:opacity-50 text-left transition-colors mb-1"
+                                    >
+                                        {goingLive ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Video className="w-4 h-4" />
+                                        )}
+                                        Go Live
+                                    </button>
+                                )}
+                                <button
+                                    onClick={handleEndStream}
+                                    disabled={endingStream}
+                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg disabled:opacity-50 text-left transition-colors"
+                                >
+                                    {endingStream ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Power className="w-4 h-4" />
+                                    )}
+                                    End Stream
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
-            )}
-
-            {/* Control Bar - Bottom of video */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 z-20">
-                <ControlBar 
-                variation="minimal"
-                controls={{
-                    camera: isStreamer,
-                    microphone: isStreamer,
-                    screenShare: isStreamer,
-                    chat: false,
-                    leave: true,
-                }}
-                />
             </div>
         </div>
 
-        {/* Stream Info & Details */}
+        {/* Stream Info & Details (Scrollable below video on mobile) */}
         <div className="p-4 sm:p-6 pb-20 lg:pb-6 max-w-[1600px] mx-auto w-full">
             <ConnectedStreamInfo stream={stream} />
         </div>
       </div>
 
-      {/* Right Sidebar (Chat & Betting) */}
-      <div className="w-full lg:w-[350px] xl:w-[400px] flex-shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[#2a2a2a] bg-[#0a0a0a] lg:h-full z-10">
+      {/* Right Sidebar (Chat & Betting) - Responsive Bottom/Side */}
+      <div className="w-full h-[500px] lg:h-full lg:w-[350px] xl:w-[400px] flex-shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[#2a2a2a] bg-[#0a0a0a] z-30 shadow-2xl">
         <SidebarTabs stream={stream} />
       </div>
     </LiveKitRoom>

@@ -69,38 +69,34 @@ export function BettingPanel({ stream, className = '' }: BettingPanelProps) {
   const p2Odds = p2Pool > 0 ? (totalPool / p2Pool).toFixed(2) : '2.00';
 
   return (
-    <div className={clsx("card flex flex-col", className)}>
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
-            <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
+    <div className={clsx("flex flex-col p-4", className)}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-bold flex items-center gap-2 text-white">
+            <Coins className="w-4 h-4 text-yellow-500" />
             Predictions
         </h2>
-        <div className="text-[10px] sm:text-xs text-slate-400 bg-slate-900 px-2 py-1 rounded">
+        <div className="text-xs text-zinc-400 bg-zinc-900/50 border border-white/5 px-2 py-1 rounded">
             Pool: <span className="text-green-400 font-mono">{totalPool.toLocaleString()} SOL</span>
         </div>
       </div>
 
-      {/* Odds / Selection - More compact on mobile */}
       {/* Odds / Selection */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <button
           onClick={() => setSelectedPlayer('player1')}
           className={clsx(
-            "relative p-3 rounded-xl transition-all duration-200 group overflow-hidden",
+            "relative p-3 rounded-xl transition-all duration-200 group overflow-hidden border",
             selectedPlayer === 'player1'
-              ? 'bg-blue-600/20 ring-2 ring-blue-500 translate-y-0'
-              : 'bg-slate-800 hover:bg-slate-700/80 hover:-translate-y-0.5'
+              ? 'bg-blue-500/10 border-blue-500/50'
+              : 'bg-zinc-900/50 border-white/5 hover:bg-zinc-800'
           )}
         >
           <div className="flex flex-col items-center z-10 relative">
-            <span className="text-[10px] uppercase font-bold text-slate-400 mb-1">Player 1</span>
-            <span className="font-bold text-sm sm:text-base text-white mb-1 line-clamp-1 w-full">{stream.player1_name}</span>
-            <span className={clsx("text-xl font-black", selectedPlayer === 'player1' ? "text-blue-400" : "text-blue-500/70")}>{p1Odds}x</span>
+            <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Player 1</span>
+            <span className="font-bold text-sm text-white mb-1 line-clamp-1 w-full">{stream.player1_name}</span>
+            <span className={clsx("text-xl font-black", selectedPlayer === 'player1' ? "text-blue-400" : "text-blue-500/50")}>{p1Odds}x</span>
           </div>
           {/* Background Glow */}
-          {selectedPlayer === 'player1' && (
-             <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-          )}
           {selectedPlayer === 'player1' && (
              <div className="absolute top-2 right-2 text-blue-500">
                 <Trophy className="w-3 h-3" />
@@ -111,20 +107,17 @@ export function BettingPanel({ stream, className = '' }: BettingPanelProps) {
         <button
           onClick={() => setSelectedPlayer('player2')}
           className={clsx(
-            "relative p-3 rounded-xl transition-all duration-200 group overflow-hidden",
+            "relative p-3 rounded-xl transition-all duration-200 group overflow-hidden border",
             selectedPlayer === 'player2'
-              ? 'bg-red-600/20 ring-2 ring-red-500 translate-y-0'
-              : 'bg-slate-800 hover:bg-slate-700/80 hover:-translate-y-0.5'
+              ? 'bg-red-500/10 border-red-500/50'
+              : 'bg-zinc-900/50 border-white/5 hover:bg-zinc-800'
           )}
         >
           <div className="flex flex-col items-center z-10 relative">
-            <span className="text-[10px] uppercase font-bold text-slate-400 mb-1">Player 2</span>
-            <span className="font-bold text-sm sm:text-base text-white mb-1 line-clamp-1 w-full">{stream.player2_name}</span>
-            <span className={clsx("text-xl font-black", selectedPlayer === 'player2' ? "text-red-400" : "text-red-500/70")}>{p2Odds}x</span>
+            <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Player 2</span>
+            <span className="font-bold text-sm text-white mb-1 line-clamp-1 w-full">{stream.player2_name}</span>
+            <span className={clsx("text-xl font-black", selectedPlayer === 'player2' ? "text-red-400" : "text-red-500/50")}>{p2Odds}x</span>
           </div>
-          {selectedPlayer === 'player2' && (
-             <div className="absolute inset-0 bg-red-500/10 pointer-events-none" />
-          )}
           {selectedPlayer === 'player2' && (
              <div className="absolute top-2 right-2 text-red-500">
                 <Trophy className="w-3 h-3" />
@@ -133,11 +126,11 @@ export function BettingPanel({ stream, className = '' }: BettingPanelProps) {
         </button>
       </div>
 
-      <div className="space-y-3 sm:space-y-4">
+      <div className="space-y-4">
         <div>
-            <label className="text-[10px] sm:text-xs font-medium text-slate-400 mb-1 sm:mb-2 block uppercase tracking-wider">Wager Amount (SOL)</label>
+            <label className="text-xs font-bold text-zinc-500 mb-2 block uppercase tracking-wider">Wager Amount (SOL)</label>
             <div className="relative">
-                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs sm:text-base">SOL</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">SOL</span>
                 <input
                     type="number"
                     value={amount}
@@ -145,27 +138,27 @@ export function BettingPanel({ stream, className = '' }: BettingPanelProps) {
                     placeholder="0.00"
                     min="0"
                     step="0.1"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 sm:py-3 pl-10 sm:pl-12 pr-3 sm:pr-4 font-mono text-base sm:text-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-white"
+                    className="w-full bg-zinc-900/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 font-mono text-lg focus:outline-none focus:border-blue-500/50 focus:bg-zinc-900 transition-all text-white placeholder:text-zinc-700"
                 />
             </div>
             {/* Quick amounts */}
-            <div className="flex gap-1.5 sm:gap-2 mt-2">
+            <div className="flex gap-2 mt-2">
                 {[0.1, 0.5, 1, 5].map(val => (
                     <button 
                         key={val}
                         onClick={() => setAmount(val.toString())}
-                        className="flex-1 px-1.5 sm:px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-xs rounded border border-slate-700 transition-colors"
+                        className="flex-1 py-1.5 bg-zinc-900/50 hover:bg-zinc-800 text-xs rounded-lg border border-white/5 transition-colors text-zinc-400 hover:text-white"
                     >
-                        {val} SOL
+                        {val}
                     </button>
                 ))}
             </div>
         </div>
 
-        <div className="bg-slate-800/50 p-2 sm:p-3 rounded-lg border border-slate-700/50">
-            <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-slate-400">Potential Payout</span>
-                <span className="font-bold text-green-400">
+        <div className="bg-zinc-900/30 p-3 rounded-xl border border-white/5">
+            <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">Potential Payout</span>
+                <span className="font-bold text-green-400 font-mono">
                     {amount && selectedPlayer 
                         ? (parseFloat(amount) * parseFloat(selectedPlayer === 'player1' ? p1Odds : p2Odds)).toFixed(2) 
                         : '0.00'} SOL
@@ -177,13 +170,13 @@ export function BettingPanel({ stream, className = '' }: BettingPanelProps) {
           onClick={handlePlaceBet}
           disabled={placing || !selectedPlayer || !amount}
           className={clsx(
-            "w-full btn-primary py-2.5 sm:py-4 font-bold text-sm sm:text-lg flex items-center justify-center gap-2",
+            "w-full btn-primary py-4 font-bold text-lg flex items-center justify-center gap-2 rounded-xl",
             (placing || !selectedPlayer || !amount) && "opacity-50 cursor-not-allowed"
           )}
         >
           {placing ? (
                <>
-                 <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                 <Loader2 className="w-5 h-5 animate-spin" />
                  Processing...
                </>
           ) : (

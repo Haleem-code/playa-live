@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Stream } from '@/types';
 import { useRouter } from 'next/navigation';
 import { Clock, Calendar } from 'lucide-react';
+import { unsplashService } from '@/services/unsplash.service';
 
 interface StreamCardProps {
   stream: Stream;
@@ -27,7 +28,8 @@ function getCountdown(targetDate: Date): { days: number; hours: number; minutes:
 export function StreamCard({ stream }: StreamCardProps) {
   const router = useRouter();
   // Image Fallback Logic
-  const fallbackUrl = `https://picsum.photos/seed/${stream.id}/800/450`;
+  // Image Fallback Logic
+  const fallbackUrl = unsplashService.getImage(stream.id || stream.stream_id || 'default');
   const [useFallback, setUseFallback] = useState(!stream.thumbnail_url);
   const [fallbackError, setFallbackError] = useState(false);
 
@@ -74,109 +76,117 @@ export function StreamCard({ stream }: StreamCardProps) {
   return (
     <div
       onClick={handleClick}
-      className={`card cursor-pointer hover:scale-[1.02] transition-transform duration-200 p-0 overflow-hidden group border border-slate-700 hover:border-blue-500/50 relative ${isEnded ? 'opacity-60 cursor-not-allowed' : ''}`}
+      className={`group cursor-pointer relative p-1 transition-all duration-200 ${isEnded ? 'opacity-60 cursor-not-allowed' : 'hover:-translate-y-1'}`}
     >
-      {/* Blur Overlay for Scheduled Streams */}
-      {isScheduled && (
-        <div className="absolute inset-0 z-20 bg-slate-900/70 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none">
-          <Calendar className="w-8 h-8 text-blue-400 mb-2" />
-          <span className="text-xs text-slate-400 mb-2 font-medium">Starts In</span>
-          {countdown ? (
-            <div className="flex gap-2 text-center">
-              {countdown.days > 0 && (
+      {/* Outer Glow/Border (First Box) */}
+      <div className="absolute inset-0 border border-white/10 bg-transparent" />
+      
+      {/* Inner Box Content */}
+      <div className="relative border border-white/5 bg-black/20 backdrop-blur-sm p-0 h-full flex flex-col">
+        
+        {/* Blur Overlay for Scheduled Streams */}
+        {isScheduled && (
+          <div className="absolute inset-0 z-20 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none border-b border-white/10">
+            <Calendar className="w-8 h-8 text-zinc-400 mb-2" />
+            <span className="text-xs text-zinc-500 mb-2 font-mono uppercase tracking-widest">Starts In</span>
+            {countdown ? (
+              <div className="flex gap-4 text-center font-mono">
+                {countdown.days > 0 && (
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold text-white">{countdown.days}</span>
+                    <span className="text-[10px] text-zinc-600 uppercase">Day</span>
+                  </div>
+                )}
                 <div className="flex flex-col">
-                  <span className="text-xl font-bold text-white">{countdown.days}</span>
-                  <span className="text-[10px] text-slate-400 uppercase">Days</span>
+                  <span className="text-xl font-bold text-white">{countdown.hours.toString().padStart(2, '0')}</span>
+                  <span className="text-[10px] text-zinc-600 uppercase">Hr</span>
                 </div>
-              )}
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-white">{countdown.hours.toString().padStart(2, '0')}</span>
-                <span className="text-[10px] text-slate-400 uppercase">Hrs</span>
+                <span className="text-xl font-bold text-zinc-700">:</span>
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-white">{countdown.minutes.toString().padStart(2, '0')}</span>
+                  <span className="text-[10px] text-zinc-600 uppercase">Min</span>
+                </div>
+                <span className="text-xl font-bold text-zinc-700">:</span>
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-white">{countdown.seconds.toString().padStart(2, '0')}</span>
+                  <span className="text-[10px] text-zinc-600 uppercase">Sec</span>
+                </div>
               </div>
-              <span className="text-xl font-bold text-white">:</span>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-white">{countdown.minutes.toString().padStart(2, '0')}</span>
-                <span className="text-[10px] text-slate-400 uppercase">Min</span>
-              </div>
-              <span className="text-xl font-bold text-white">:</span>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-white">{countdown.seconds.toString().padStart(2, '0')}</span>
-                <span className="text-[10px] text-slate-400 uppercase">Sec</span>
-              </div>
+            ) : (
+              <span className="text-sm text-zinc-400 font-medium font-mono">Starting Soon...</span>
+            )}
+            <span className="text-[10px] text-zinc-600 mt-4 font-mono">
+              {scheduledDate.toLocaleDateString()} • {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        )}
+
+        {/* Overlay for Ended Streams */}
+        {isEnded && (
+          <div className="absolute inset-0 z-20 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none border-b border-white/10">
+            <div className="w-12 h-12 bg-zinc-900 flex items-center justify-center mb-2 border border-zinc-800">
+              <Clock className="w-6 h-6 text-zinc-600" />
             </div>
+            <span className="text-sm text-zinc-500 font-mono uppercase tracking-wider">Stream Ended</span>
+          </div>
+        )}
+
+        {/* Thumbnail */}
+        <div className="relative aspect-video bg-black/50 border-b border-white/5">
+          {!fallbackError && displayUrl ? (
+            <img 
+              src={displayUrl} 
+              alt={stream.title}
+              className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+              onError={() => {
+                  if (!useFallback) setUseFallback(true);
+                  else setFallbackError(true);
+              }}
+            />
           ) : (
-            <span className="text-sm text-blue-400 font-medium">Starting Soon...</span>
-          )}
-          <span className="text-[10px] text-slate-500 mt-2">
-            {scheduledDate.toLocaleDateString()} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
-      )}
-
-      {/* Overlay for Ended Streams */}
-      {isEnded && (
-        <div className="absolute inset-0 z-20 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none">
-          <div className="w-12 h-12 rounded-full bg-gray-600/50 flex items-center justify-center mb-2">
-            <Clock className="w-6 h-6 text-gray-400" />
-          </div>
-          <span className="text-sm text-gray-400 font-medium">Stream Ended</span>
-          <span className="text-[10px] text-slate-500 mt-1">This stream is no longer available</span>
-        </div>
-      )}
-
-      {/* Thumbnail */}
-      <div className="relative aspect-video bg-slate-800">
-        {!fallbackError && displayUrl ? (
-          <img 
-            src={displayUrl} 
-            alt={stream.title}
-            className="w-full h-full object-cover"
-            onError={() => {
-                if (!useFallback) setUseFallback(true);
-                else setFallbackError(true);
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full flex-col text-slate-600 gap-2">
-            <span className="text-4xl font-black opacity-20">VS</span>
-          </div>
-        )}
-        
-        {/* Status Badge */}
-        <div className={`absolute top-2 right-2 ${statusColor} px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white shadow-sm`}>
-          {stream.status}
-        </div>
-        
-        {/* Live Viewers Overlay (if live) */}
-        {stream.is_live && (
-          <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-white flex items-center gap-1 font-medium">
-             <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-             {stream.stats?.current_viewers?.toLocaleString() ?? 0}
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        <h3 className="font-bold text-base mb-1 line-clamp-1 group-hover:text-blue-400 transition-colors">
-          {stream.title}
-        </h3>
-        
-        <p className="text-xs text-slate-400 mb-3 line-clamp-1">
-          {stream.player1_name} vs {stream.player2_name}
-        </p>
-
-        <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-700/50 pt-3">
-          <div className="flex items-center gap-1">
-            <span className="text-blue-400 font-medium">{stream.stats?.total_pool_sol?.toLocaleString() ?? 0} SOL</span>
-            <span>pool</span>
-          </div>
-          {isScheduled && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{scheduledDate.toLocaleDateString()}</span>
+            <div className="flex items-center justify-center h-full flex-col text-zinc-800 gap-2">
+              <span className="text-4xl font-black opacity-20">VS</span>
             </div>
           )}
+          
+          {/* Status Badge - Sharp corners */}
+          <div className={`absolute top-0 right-0 ${statusColor} px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm`}>
+            {stream.status}
+          </div>
+          
+          {/* Live Viewers Overlay - Sharp corners */}
+          {stream.is_live && (
+            <div className="absolute bottom-0 left-0 bg-black/80 backdrop-blur-sm px-3 py-1 text-[10px] text-zinc-300 flex items-center gap-2 font-mono border-t border-r border-white/10">
+               <div className="w-1.5 h-1.5 bg-red-500 animate-pulse" />
+               {stream.stats?.current_viewers?.toLocaleString() ?? 0} VIEWERS
+            </div>
+          )}
+        </div>
+
+        {/* Content - Transparent & Sharp */}
+        <div className="p-4 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-base mb-1 line-clamp-1 text-white group-hover:text-blue-400 transition-colors uppercase tracking-tight">
+              {stream.title}
+            </h3>
+            
+            <p className="text-xs text-zinc-500 mb-3 line-clamp-1 font-mono uppercase">
+              {stream.player1_name} <span className="text-zinc-700 mx-1">VS</span> {stream.player2_name}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-zinc-500 pt-3 border-t border-white/5 font-mono">
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-300 font-bold">{stream.stats?.total_pool_sol?.toLocaleString() ?? 0} SOL</span>
+              <span className="text-zinc-600">POOL</span>
+            </div>
+            {isScheduled && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-3 h-3" />
+                <span>{scheduledDate.toLocaleDateString()}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { userService } from '@/services/user.service';
 import { streamService } from '@/services/stream.service';
-import { authService } from '@/services';
+import { authService, unsplashService } from '@/services';
 import type { User } from '@/types';
 
 export default function CreateStreamPage() {
@@ -308,11 +308,10 @@ export default function CreateStreamPage() {
                     className="object-cover opacity-80 transition-opacity"
                   />
               ) : (
-                  <Image 
-                    src="/stream-fps.png" 
+                  <img 
+                    src={unsplashService.getRandomImage()} 
                     alt="Stream Preview Placeholder" 
-                    fill 
-                    className="object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
                   />
               )}
               

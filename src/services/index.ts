@@ -6,6 +6,7 @@ import { rewardService } from './reward.service';
 import { userService } from './user.service';
 import { livekitService } from './livekit.service';
 import { notificationService } from './notification.service';
+import { unsplashService } from './unsplash.service';
 
 export { 
   authService, 
@@ -15,7 +16,8 @@ export {
   rewardService,
   userService,
   livekitService,
-  notificationService
+  notificationService,
+  unsplashService
 };
 
 // Backend-compatible flat API object for backward compatibility with existing components

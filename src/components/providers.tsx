@@ -1,8 +1,9 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider } from './AuthProvider';
+import { unsplashService } from '@/services/unsplash.service';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -12,6 +13,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       },
     },
   }));
+
+  useEffect(() => {
+     // Pre-fetch random gaming images
+     unsplashService.initialize();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
