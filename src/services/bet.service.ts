@@ -2,12 +2,13 @@ import { apiClient, ApiResponse } from './api.client';
 
 export const betService = {
   async placeBet(userId: string, streamId: string, prediction: 'player1' | 'player2', amountSol: number): Promise<ApiResponse> {
+    // Convert prediction string to number (1 = player1, 2 = player2)
+    const predictionNumber = prediction === 'player1' ? 1 : 2;
+    
     const response = await apiClient.post('/bets/place', {
-      userId,
       streamId,
-      prediction,
-      amountSol,
-      processWalletTransaction: true,
+      prediction: predictionNumber,
+      amount: amountSol,
     });
     return response.data;
   },
