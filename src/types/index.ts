@@ -3,7 +3,7 @@ export interface User {
   email: string;
   username?: string;
   walletAddress: string;
-  role: 'user' | 'moderator' | 'admin';
+  role: "user" | "moderator" | "admin";
   balance?: number;
   profileImage?: string;
   gravatarUrl?: string;
@@ -41,6 +41,7 @@ export interface Stream {
   livekitRoomName?: string;
   player1_walletAddress?: string;
   player2_walletAddress?: string;
+  coverImage?: string;
 }
 
 export interface CreateStreamData {
@@ -65,8 +66,8 @@ export interface Bet {
   streamId: string;
   userId: string;
   amount: number;
-  prediction: 'player1' | 'player2';
-  status: 'pending' | 'won' | 'lost';
+  prediction: "player1" | "player2";
+  status: "pending" | "won" | "lost";
   payout?: number;
   createdAt: string;
 }
@@ -74,7 +75,12 @@ export interface Bet {
 export interface Notification {
   _id: string;
   userId: string;
-  type: 'stream_created' | 'stream_started' | 'stream_ended' | 'bet_won' | 'bet_lost';
+  type:
+    | "stream_created"
+    | "stream_started"
+    | "stream_ended"
+    | "bet_won"
+    | "bet_lost";
   title: string;
   message: string;
   data?: {
@@ -94,7 +100,5 @@ export interface Notification {
 export interface LiveKitToken {
   token: string;
   url: string;
-  role?: 'streamer' | 'viewer';
+  role?: "streamer" | "viewer";
 }
-
-
