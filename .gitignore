@@ -43,3 +43,5 @@ next-env.d.ts
 
 #Markdown
 .md
+
+*.apk

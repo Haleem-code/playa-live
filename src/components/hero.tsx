@@ -5,7 +5,7 @@ import Image from "next/image"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Play, Users } from "lucide-react"
+import { Play, Users, Download, Smartphone } from "lucide-react"
 import { VideoModal } from "@/components/video-modal"
 
 export function Hero() {
@@ -53,6 +53,13 @@ export function Hero() {
           </Button>
           <Button className="cursor-pointer" size="lg" variant="outline" onClick={() => setShowVideo(true)}>
             Watch Demo <Play className="ml-2 h-4 w-4" />
+          </Button>
+          <Button className="cursor-pointer border-green-500/30 bg-green-500/10 hover:bg-green-500/20 text-green-400" size="lg" variant="outline" asChild>
+            <a href="/apk/playa-mobile.apk" download>
+              <Smartphone className="mr-2 h-4 w-4" />
+              Download Android App
+              <Download className="ml-2 h-4 w-4" />
+            </a>
           </Button>
         </div>
 

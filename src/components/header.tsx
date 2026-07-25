@@ -1,8 +1,6 @@
-import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Download, Smartphone } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function Header() {
@@ -27,6 +25,18 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-3">
+             <Button 
+               variant="outline" 
+               size="sm" 
+               className="rounded-full px-4 hidden sm:flex items-center gap-2 border-green-500/30 bg-green-500/10 hover:bg-green-500/20 text-green-400" 
+               asChild
+             >
+               <a href="/apk/playa-mobile.apk" download>
+                 <Smartphone className="h-4 w-4" />
+                 Android App
+                 <Download className="h-3 w-3" />
+               </a>
+             </Button>
              <Button 
                size="sm" 
                className="rounded-full px-6 cursor-pointer" 
