@@ -3,6 +3,8 @@ import { useState } from "react"
 import { Loader2, Download, Smartphone } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+const APK_DOWNLOAD_URL = "/apk/playa-mobile.apk"
+
 export function Header() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -31,7 +33,13 @@ export function Header() {
                className="rounded-full px-4 hidden sm:flex items-center gap-2 border-green-500/30 bg-green-500/10 hover:bg-green-500/20 text-green-400" 
                asChild
              >
-               <a href="/apk/playa-mobile.apk" download>
+               <a
+                 href={APK_DOWNLOAD_URL}
+                 download="playa-mobile.apk"
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 type="application/vnd.android.package-archive"
+               >
                  <Smartphone className="h-4 w-4" />
                  Android App
                  <Download className="h-3 w-3" />

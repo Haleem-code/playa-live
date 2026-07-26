@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card"
 import { Play, Users, Download, Smartphone } from "lucide-react"
 import { VideoModal } from "@/components/video-modal"
 
+const APK_DOWNLOAD_URL = "/apk/playa-mobile.apk"
+
 export function Hero() {
   const [showVideo, setShowVideo] = useState(false)
 
@@ -55,7 +57,13 @@ export function Hero() {
             Watch Demo <Play className="ml-2 h-4 w-4" />
           </Button>
           <Button className="cursor-pointer border-green-500/30 bg-green-500/10 hover:bg-green-500/20 text-green-400" size="lg" variant="outline" asChild>
-            <a href="/apk/playa-mobile.apk" download>
+            <a
+              href={APK_DOWNLOAD_URL}
+              download="playa-mobile.apk"
+              target="_blank"
+              rel="noopener noreferrer"
+              type="application/vnd.android.package-archive"
+            >
               <Smartphone className="mr-2 h-4 w-4" />
               Download Android App
               <Download className="ml-2 h-4 w-4" />
