@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Loader2, Download, Smartphone } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-const APK_DOWNLOAD_URL = "/apk/playa-mobile.apk"
+const APK_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1fY0r1msoBtJaFaE0qrFvUwFESrvpiMrs"
 
 export function Header() {
   const [isLoading, setIsLoading] = useState(false)

@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Play, Users, Download, Smartphone } from "lucide-react"
 import { VideoModal } from "@/components/video-modal"
 
-const APK_DOWNLOAD_URL = "/apk/playa-mobile.apk"
+const APK_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1fY0r1msoBtJaFaE0qrFvUwFESrvpiMrs"
 
 export function Hero() {
   const [showVideo, setShowVideo] = useState(false)
